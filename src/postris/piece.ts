@@ -1,5 +1,4 @@
 import { Renderer } from "./renderer";
-import { Board } from "./board";
 import { Vec } from "./helpers";
 
 enum TetriminoType {
@@ -15,65 +14,99 @@ enum TetriminoType {
 export class Tetrimino {
     readonly type: TetriminoType;
     readonly color: string;
-    readonly shape: Vec[];
+    private readonly shape: Vec[][];
 
-    constructor(type: TetriminoType, color: string, shape: Vec[]) {
+    constructor(type: TetriminoType, color: string, shape: Vec[][]) {
         this.type = type;
         this.color = color;
         this.shape = shape;
     }
+
+    blocks(rotation: number) {
+        if (rotation < 0 || rotation > 3) throw new Error(`Invalid rotation: ${rotation}`);
+        return this.shape[rotation];
+    }
 }
 
 export class Piece {
-    board: Board;
-    tetrimino: Tetrimino;
-    position: Vec;
-    rotation: number = 0;
+    readonly tetrimino: Tetrimino;
+    readonly position: Vec;
+    readonly rotation: number;
 
-    constructor(board: Board, tetrimino: Tetrimino) {
-        this.board = board;
+    constructor(tetrimino: Tetrimino, position: Vec, rotation: number = 0) {
         this.tetrimino = tetrimino;
-        this.position = board.origin;
+        this.position = position;
+        this.rotation = rotation;
     }
 
-    fall() {
-        this.position = this.position.add(Vec.fromY(-1));
+    get blocks() {
+        return this.tetrimino.blocks(this.rotation).map(v => v.add(this.position));
     }
 
-    move(direction: number) {
-        this.position = this.position.add(Vec.fromX(direction));
+    fall(distance: number = 1) {
+        const newPosition = this.position.add(new Vec(0, -distance));
+        return new Piece(this.tetrimino, newPosition, this.rotation);
+    }
+
+    move(distance: number) {
+        const newPosition = this.position.add(new Vec(distance, 0));
+        return new Piece(this.tetrimino, newPosition, this.rotation);
     }
 
     rotate(direction: number) {
-        this.rotation = (this.rotation + direction) % 4;
-    }
-
-    isLanded() {
-        return this.tetrimino.shape.find(v =>
-            this.board.isFree(this.position.add(v))
-        ) !== undefined;
+        const fullRotation = 4;
+        const newRotation = (this.rotation + direction + fullRotation) % fullRotation;
+        return new Piece(this.tetrimino, this.position, newRotation);
     }
 
     render(renderer: Renderer) {
-        this.tetrimino.shape.forEach(v =>
-            renderer.renderBlock(this.position.x + v.x, this.position.y + v.y, this.tetrimino.color)
+        this.blocks.forEach(v =>
+            renderer.renderBlock(v, this.tetrimino.color)
         )
     }
 }
 
-const shape = [
-    new Vec(0, 0),
-    new Vec(1, 0),
-    new Vec(0, 1),
-    new Vec(1, 1),
-];
-
 export const tetriminos = [
-    new Tetrimino(TetriminoType.O, "cyan", shape),
-    new Tetrimino(TetriminoType.I, "yellow", shape),
-    new Tetrimino(TetriminoType.T, "purple", shape),
-    new Tetrimino(TetriminoType.S, "green", shape),
-    new Tetrimino(TetriminoType.Z, "red", shape),
-    new Tetrimino(TetriminoType.J, "blue", shape),
-    new Tetrimino(TetriminoType.L, "orange", shape),
+    new Tetrimino(TetriminoType.O, "cyan", [
+        [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)]
+    ]),
+    new Tetrimino(TetriminoType.I, "yellow", [
+        [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(2, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(0, 2)],
+        [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(2, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(0, 2)]
+    ]),
+    new Tetrimino(TetriminoType.T, "purple", [
+        [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
+        [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
+        [new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1), new Vec(1, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, 0)]
+    ]),
+    new Tetrimino(TetriminoType.S, "green", [
+        [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
+        [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0)],
+        [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
+        [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0)]
+    ]),
+    new Tetrimino(TetriminoType.Z, "red", [
+        [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, -1)],
+        [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1)],
+        [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, -1)],
+        [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1)]
+    ]),
+    new Tetrimino(TetriminoType.J, "blue", [
+        [new Vec(-1, 0), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
+        [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
+        [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, 0), new Vec(1, 0)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, 1)]
+    ]),
+    new Tetrimino(TetriminoType.L, "orange", [
+        [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0)],
+        [new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
+        [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(1, 1)],
+        [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, -1)]
+    ]),
 ];

@@ -1,7 +1,5 @@
 import { Renderer } from "./renderer";
-import { Board } from "./board";
-import { tetriminos } from "./piece";
-import { choice } from "./helpers";
+import { State } from "./state";
 
 enum DirectionX {
     Left = -1,
@@ -13,12 +11,19 @@ enum DirectionY {
     Down = -1
 }
 
+enum Rotation {
+    Ccw = -1,
+    Cw = 1
+}
+
 enum KeyCode {
     Left = 37,
     Up = 38,
     Right = 39,
     Down = 40,
     Space = 32,
+    Y = 89,
+    X = 88
 }
 
 enum Action {
@@ -27,7 +32,7 @@ enum Action {
     Left,
     Right,
     Down,
-    Drop  
+    Drop
 }
 
 interface ActionMap {
@@ -35,23 +40,25 @@ interface ActionMap {
 }
 
 export class Game {
-    board: Board;
+    state: State;
     renderer: Renderer;
     dimensions: number[];
     actionMap!: ActionMap;
     speed: number = 1000 / 1.5;
 
     constructor() {
-        this.board = new Board();
+        this.state = new State()
         this.dimensions = [10, 10];
         this.renderer = new Renderer();
         this.renderer.init();
         this.actionMap = {
-            [KeyCode.Left]: () => this.move(DirectionX.Left),
-            [KeyCode.Right]: () => this.move(DirectionX.Right),
-            [KeyCode.Down]: () => this.fall(),
-            [KeyCode.Space]: () => this.drop(),
-            [KeyCode.Up]: () => this.elapsed(),
+            [KeyCode.Left]: () => this.state.move(DirectionX.Left),
+            [KeyCode.Right]: () => this.state.move(DirectionX.Right),
+            [KeyCode.Down]: () => this.state.fall(),
+            [KeyCode.Up]: () => this.state.drop(),
+            [KeyCode.Space]: () => this.elapsed(),
+            [KeyCode.X]: () => this.state.rotate(Rotation.Cw),
+            [KeyCode.Y]: () => this.state.rotate(Rotation.Ccw),
         }
     }
 
@@ -61,7 +68,6 @@ export class Game {
     }
 
     init() {
-        this.spawn();
         window.addEventListener("keydown", event => {
             const action = this.actionMap[event.keyCode];
             if (action) {
@@ -69,7 +75,7 @@ export class Game {
             }
         });
         setInterval(() => {
-            //this.elapsed();
+            this.elapsed();
         }, this.speed);
     }
 
@@ -79,44 +85,9 @@ export class Game {
         window.requestAnimationFrame(this.loop.bind(this));
     }
 
-    spawn() {
-        const tetrimino = choice(tetriminos);
-        this.board.newPiece(tetrimino);
-    }
-
-    move(direction: number) {
-        this.board.current?.move(direction);
-    }
-
     elapsed() {
-        console.log("Elapsed");
-        this.board.current?.fall();
-        this.checkCollision();
-    }
-
-    fall() {
-        console.log("Fall");
-        this.board.current?.fall();
-        this.checkCollision();
-    }
-
-    rotate(direction: boolean) {
-        console.log("Rotate");
-        // TODO
-        this.checkCollision();
-    }
-
-    drop() {
-        console.log("Drop");
-        // TODO
-        this.checkCollision();
-    }
-
-    checkCollision() {
-        if (this.board.current?.isLanded()) {
-            console.log("Placed");
-            this.board.place();
-        }
+        this.state.check();
+        this.state.fall();
     }
 
     update() {
@@ -124,7 +95,7 @@ export class Game {
 
     render() {
         this.renderer.clear();
-        this.board.render(this.renderer);
+        this.state.render(this.renderer);
         this.renderer.debug(this);
     }
 }

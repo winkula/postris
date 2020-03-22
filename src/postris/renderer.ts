@@ -1,5 +1,5 @@
 import { Game } from "./game";
-import { inspect } from "./helpers";
+import { inspect, Vec } from "./helpers";
 
 export class Renderer {
     canvas!: HTMLCanvasElement;
@@ -27,10 +27,10 @@ export class Renderer {
         this.canvas = canvas;
     }
 
-    renderBlock(x: number, y: number, color: string): void {
+    renderBlock(vec: Vec, color: string): void {
         const blockSize = 30;
         this.ctx.fillStyle = color;
-        this.ctx.fillRect(x * blockSize, 500 + (-y) * blockSize, blockSize, blockSize);
+        this.ctx.fillRect(vec.x * blockSize, 500 + (-vec.y) * blockSize, blockSize, blockSize);
     }
 
     clear() {
@@ -41,15 +41,13 @@ export class Renderer {
         const text: string[] = [];
         const add = (line: string) => text.push(...line.split("\n"));
 
-        add(`Board: ${inspect(game.board)}`);
-        add(`Current: ${inspect(game.board.current)}`);
-        add(`Next: ${inspect(game.board.next)}`);
+        add(`State: ${inspect(game.state)}`);
 
         let i = 0;
-        this.ctx.fillStyle = "black";
+        this.ctx.fillStyle = "black";        
         this.ctx.font = "11px Consolas"
         text.forEach(line =>
-            this.ctx.fillText(line, 400, 10 * i++)
+            this.ctx.fillText(line, 400, 30 + 10 * i++)
         );
     }
 }
