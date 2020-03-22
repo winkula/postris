@@ -97,5 +97,6 @@ export class Game {
         this.renderer.clear();
         this.state.render(this.renderer);
         this.renderer.debug(this);
+        this.renderer.render();
     }
 }

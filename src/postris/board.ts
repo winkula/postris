@@ -77,5 +77,6 @@ export class Board {
                 r.renderBlock(vec, getColor(this.get(vec)));
             }
         }
+        r.renderWalls(this.width, this.height);
     }
 }
