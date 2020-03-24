@@ -1,6 +1,6 @@
-import { Renderer } from "./renderer";
+import { Renderer } from "../gfx/renderer";
 import { Piece, Tetrimino } from "./piece";
-import { Vec, range } from "./helpers";
+import { Vec, range } from "../helpers";
 
 const freeCell = "";
 

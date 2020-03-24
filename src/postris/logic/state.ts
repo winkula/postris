@@ -1,7 +1,17 @@
 import { Board } from "./board";
 import { tetriminos, Piece, Tetrimino } from "./piece";
-import { Renderer } from "./renderer";
-import { choice, range } from "./helpers";
+import { Renderer } from "../gfx/renderer";
+import { choice, range } from "../helpers";
+
+export enum Direction {
+    Left = -1,
+    Right = 1
+}
+
+export enum Rotation {
+    CounterClockwise = -1,
+    Clockwise = 1
+}
 
 export class State {
     board: Board;
@@ -44,15 +54,15 @@ export class State {
         }
     }
 
-    move(direction: number) {
+    move(direction: Direction) {
         this.apply(
             this.current.move(direction)
         );
     }
 
-    rotate(direction: number) {
+    rotate(rotation: Rotation) {
         this.apply(
-            this.current.rotate(direction)
+            this.current.rotate(rotation)
         );
     }
 

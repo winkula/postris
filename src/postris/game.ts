@@ -1,38 +1,13 @@
-import { Renderer } from "./renderer";
-import { State } from "./state";
-
-enum DirectionX {
-    Left = -1,
-    Right = 1
-}
-
-enum DirectionY {
-    Up = 1,
-    Down = -1
-}
-
-enum Rotation {
-    Ccw = -1,
-    Cw = 1
-}
+import { Renderer } from "./gfx/renderer";
+import { State, Direction, Rotation } from "./logic/state";
 
 enum KeyCode {
     Left = 37,
     Up = 38,
     Right = 39,
     Down = 40,
-    Space = 32,
     Y = 89,
     X = 88
-}
-
-enum Action {
-    RotateCw,
-    RotateCcw,
-    Left,
-    Right,
-    Down,
-    Drop
 }
 
 interface ActionMap {
@@ -49,54 +24,69 @@ export class Game {
     constructor() {
         this.state = new State()
         this.dimensions = [10, 10];
-        this.renderer = new Renderer();
+        this.renderer = new Renderer(this.state);
         this.renderer.init();
         this.actionMap = {
-            [KeyCode.Left]: () => this.state.move(DirectionX.Left),
-            [KeyCode.Right]: () => this.state.move(DirectionX.Right),
-            [KeyCode.Down]: () => this.state.fall(),
-            [KeyCode.Up]: () => this.state.drop(),
-            [KeyCode.Space]: () => this.elapsed(),
-            [KeyCode.X]: () => this.state.rotate(Rotation.Cw),
-            [KeyCode.Y]: () => this.state.rotate(Rotation.Ccw),
+            [KeyCode.Left]: () => this.move(Direction.Left),
+            [KeyCode.Right]: () => this.move(Direction.Right),
+            [KeyCode.Down]: () => this.down(),
+            [KeyCode.Up]: () => this.drop(),
+            [KeyCode.X]: () => this.rotate(Rotation.Clockwise),
+            [KeyCode.Y]: () => this.rotate(Rotation.CounterClockwise),
         }
     }
 
-    run() {
-        this.init();
-        this.loop();
+    async run() {
+        await this.init();
     }
 
-    init() {
+    async init() {
+        const rendererPromise = this.renderer.init();
         window.addEventListener("keydown", event => {
             const action = this.actionMap[event.keyCode];
-            if (action) {
-                action();
-            }
+            action?.();
         });
-        setInterval(() => {
-            this.elapsed();
-        }, this.speed);
+        await rendererPromise;
+        this.loop();
+        this.renderer.spawn(this.state.current);
     }
 
     loop() {
-        this.update();
+        setInterval(() => this.elapsed(), this.speed);
+    }
+
+    move(direction: Direction) {
+        this.state.move(direction);
+        this.renderer.move(direction);
         this.render();
-        window.requestAnimationFrame(this.loop.bind(this));
+    }
+
+    down() {
+        this.state.fall();
+        this.render();
+    }
+
+    drop() {
+        this.state.drop();
+        this.render();
+    }
+
+    rotate(rotation: Rotation) {
+        this.state.rotate(rotation);
+        this.renderer.rotate(rotation);
+        this.render();
     }
 
     elapsed() {
         this.state.check();
         this.state.fall();
-    }
-
-    update() {
+        this.render();
     }
 
     render() {
         this.renderer.clear();
         this.state.render(this.renderer);
-        this.renderer.debug(this);
         this.renderer.render();
+        window.requestAnimationFrame(this.render.bind(this));
     }
 }
