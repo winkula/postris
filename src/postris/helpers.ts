@@ -15,6 +15,8 @@ export const range = (x: number) => [...Array<number>(x).keys()];
 
 export const choice = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 
+export const wait = (time: number) => new Promise<void>(res => setTimeout(res, time));
+
 function printCells(cells: any) {
     const getChar = (char: string) => {
         if (char === undefined) return " ";

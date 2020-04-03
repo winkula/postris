@@ -1,4 +1,4 @@
-import { Renderer } from "../gfx/renderer";
+import { Gfx } from "../ui/gfx";
 import { Piece, Tetrimino } from "./piece";
 import { Vec, range } from "../helpers";
 
@@ -66,7 +66,7 @@ export class Board {
         return cleared;
     }
 
-    render(r: Renderer) {
+    render(gfx: Gfx) {
         const getColor = (value: string | undefined) => {
             if (!value || value == freeCell) return "black";
             return value;
@@ -74,9 +74,8 @@ export class Board {
         for (const x of range(this.width)) {
             for (const y of range(this.height)) {
                 const vec = new Vec(x, y);
-                r.renderBlock(vec, getColor(this.get(vec)));
+                gfx.renderBlock(vec, getColor(this.get(vec)));
             }
         }
-        r.renderWalls(this.width, this.height);
     }
 }

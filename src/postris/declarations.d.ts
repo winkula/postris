@@ -1,1 +1,1 @@
-//declare module 'three/build/three.module.js';
+declare module "gameboy-sound";

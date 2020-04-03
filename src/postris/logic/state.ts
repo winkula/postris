@@ -1,6 +1,6 @@
 import { Board } from "./board";
 import { tetriminos, Piece, Tetrimino } from "./piece";
-import { Renderer } from "../gfx/renderer";
+import { Gfx } from "../ui/gfx";
 import { choice, range } from "../helpers";
 
 export enum Direction {
@@ -13,11 +13,22 @@ export enum Rotation {
     Clockwise = 1
 }
 
+export class ActionResult {
+    success: boolean = false;
+    spawned: boolean = false;
+    gameOver: boolean = false;
+    lines: number = 0;
+    previous?: Piece;
+}
+
 export class State {
     board: Board;
     current!: Piece;
     next?: Tetrimino;
+    level: number = 1;
     lines: number = 0;
+    score: number = 0;
+    time: number = 55;
 
     constructor() {
         this.board = new Board(10, 20);
@@ -28,6 +39,10 @@ export class State {
         return Math.min(
             ...this.current.blocks.map(block => this.board.fallSpace(block))
         );
+    }
+
+    get shadow() {
+        return this.current.fall(this.fallHeight);
     }
 
     get isLanded() {
@@ -45,52 +60,61 @@ export class State {
         this.current = newCurrent;
     }
 
-    private apply(transformed: Piece, check: boolean = false) {
-        if (!this.board.isCollision(transformed)) {
-            this.current = transformed;
-            if (check) {
-                this.check();
-            }
+    private apply(transformed: Piece) {
+        if (this.isGameOver) {
+            throw new Error(`Game over: you can not continue playing :(`);
         }
+        if (!this.board.isCollision(transformed)) {
+            const previous = this.current;
+            this.current = transformed;
+            return <ActionResult>{ success: true, previous };
+        }
+        return <ActionResult>{};
     }
 
     move(direction: Direction) {
-        this.apply(
+        return this.apply(
             this.current.move(direction)
         );
     }
 
     rotate(rotation: Rotation) {
-        this.apply(
+        return this.apply(
             this.current.rotate(rotation)
         );
     }
 
     fall() {
-        this.apply(
+        return this.apply(
             this.current.fall()
         );
     }
 
     drop() {
         this.apply(
-            this.current.fall(this.fallHeight)
-        , true);       
+            this.current.fall(this.fallHeight),
+        );
+        return this.check();
     }
 
     check() {
         if (this.isLanded) {
             this.board.place(this.current);
-            this.lines += this.board.clearLines();
+            const lines = this.board.clearLines();
+            this.lines += lines;
             this.spawn();
+            return <ActionResult>{
+                success: true,
+                spawned: true,
+                gameOver: this.isGameOver,
+                lines: lines,
+            };
         }
-        if (this.isGameOver) {
-            throw new Error("Game over");
-        }
+        return <ActionResult>{};
     }
 
-    render(r: Renderer) {
-        this.board?.render(r);
-        this.current?.render(r);
+    render(gfx: Gfx) {
+        this.board?.render(gfx);
+        this.current?.render(gfx);
     }
 }

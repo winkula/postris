@@ -1,4 +1,4 @@
-import { Renderer } from "../gfx/renderer";
+import { Gfx } from "../ui/gfx";
 import { Vec } from "../helpers";
 import { Rotation, Direction } from "./state";
 
@@ -16,14 +16,12 @@ export class Tetrimino {
     readonly type: TetriminoType;
     readonly color: string;
     readonly shape: Vec[][];
-    readonly center: Vec;
     readonly texture?: string;
 
-    constructor(type: TetriminoType, color: string, shape: Vec[][], center: Vec, texture?: string) {
+    constructor(type: TetriminoType, color: string, shape: Vec[][], texture?: string) {
         this.type = type;
         this.color = color;
         this.shape = shape;
-        this.center = center;
         this.texture = texture;
     }
 
@@ -64,8 +62,8 @@ export class Piece {
         return new Piece(this.tetrimino, this.position, newRotation);
     }
 
-    render(r: Renderer) {
-        r.renderPiece(this);
+    render(gfx: Gfx) {
+        gfx.renderPiece(this);
     }
 }
 
@@ -75,41 +73,41 @@ export const tetriminos = [
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)]
-    ], new Vec(0.5, 0.5)),
+    ]),
     new Tetrimino(TetriminoType.I, "yellow", [
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(2, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(0, 2)],
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(2, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(0, 2)]
-    ], new Vec(1, 1)),
+    ]),
     new Tetrimino(TetriminoType.T, "purple", [
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, 0)]
-    ], new Vec(1, 1)),
+    ]),
     new Tetrimino(TetriminoType.S, "green", [
         [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0)],
         [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0)]
-    ], new Vec(1, 1)),
+    ]),
     new Tetrimino(TetriminoType.Z, "red", [
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, -1)],
         [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, -1)],
         [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1)]
-    ], new Vec(1, 1)),
+    ]),
     new Tetrimino(TetriminoType.J, "blue", [
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, 1)]
-    ], new Vec(1, 1)),
+    ]),
     new Tetrimino(TetriminoType.L, "orange", [
         [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(1, 1)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, -1)]
-    ], new Vec(1, 1)),
+    ]),
 ];

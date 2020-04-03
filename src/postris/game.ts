@@ -1,5 +1,7 @@
-import { Renderer } from "./gfx/renderer";
-import { State, Direction, Rotation } from "./logic/state";
+import { Gfx } from "./ui/gfx";
+import { State, Direction, Rotation, ActionResult } from "./logic/state";
+import { Sfx } from "./ui/sfx";
+import { wait } from "./helpers";
 
 enum KeyCode {
     Left = 37,
@@ -16,77 +18,126 @@ interface ActionMap {
 
 export class Game {
     state: State;
-    renderer: Renderer;
     dimensions: number[];
     actionMap!: ActionMap;
     speed: number = 1000 / 1.5;
+    timerHandle?: NodeJS.Timeout;
+    running = true;
+
+    gfx: Gfx;
+    sfx: Sfx;
 
     constructor() {
-        this.state = new State()
+        this.state = new State();
         this.dimensions = [10, 10];
-        this.renderer = new Renderer(this.state);
-        this.renderer.init();
+        this.gfx = new Gfx(this.state);
         this.actionMap = {
-            [KeyCode.Left]: () => this.move(Direction.Left),
-            [KeyCode.Right]: () => this.move(Direction.Right),
-            [KeyCode.Down]: () => this.down(),
-            [KeyCode.Up]: () => this.drop(),
-            [KeyCode.X]: () => this.rotate(Rotation.Clockwise),
-            [KeyCode.Y]: () => this.rotate(Rotation.CounterClockwise),
+            [KeyCode.Left]: () => this.do(
+                () => this.state.move(Direction.Left),
+                () => this.sfx.move()
+            ),
+            [KeyCode.Right]: () => this.do(
+                () => this.state.move(Direction.Right),
+                () => this.sfx.move()
+            ),
+            [KeyCode.Down]: () => this.do(
+                () => this.state.fall(),
+                () => this.sfx.fall()
+            ),
+            [KeyCode.Up]: () => this.do(
+                () => this.drop(),
+                () => this.sfx.drop()
+            ),
+            [KeyCode.X]: () => this.do(
+                () => this.state.rotate(Rotation.Clockwise),
+                () => this.sfx.rotate()
+            ),
+            [KeyCode.Y]: () => this.do(
+                () => this.state.rotate(Rotation.CounterClockwise),
+                () => this.sfx.rotate()
+            ),
         }
+        this.sfx = new Sfx();
     }
 
     async run() {
+        this.gfx.init();
         await this.init();
     }
 
     async init() {
-        const rendererPromise = this.renderer.init();
-        window.addEventListener("keydown", event => {
+        await this.gfx.init();
+        window.onkeydown = (event: KeyboardEvent) => {
             const action = this.actionMap[event.keyCode];
             action?.();
-        });
-        await rendererPromise;
+        };
+        this.sfx.play();
+        this.render();
         this.loop();
-        this.renderer.spawn(this.state.current);
     }
 
-    loop() {
-        setInterval(() => this.elapsed(), this.speed);
+    do(action: () => ActionResult, sound?: () => void) {
+        if (!this.running) {
+            return;
+        }
+        try {
+            const result = action?.();
+            if (result.success) {
+                sound?.();
+                this.gfx.changed(this.state);
+            }
+            if (result.lines) {
+                this.gfx.lines(result.lines);
+            }
+            if (result.spawned) {
+            }
+            if (result.gameOver) {
+                this.running = false;
+                console.log("Game is over");
+            }
+        } catch (error) {
+            this.running = false;
+            if (this.timerHandle) {
+                clearTimeout(this.timerHandle);
+            }
+        }
     }
 
-    move(direction: Direction) {
-        this.state.move(direction);
-        this.renderer.move(direction);
-        this.render();
-    }
-
-    down() {
-        this.state.fall();
-        this.render();
+    async loop() {
+        while (this.running) {
+            this.elapsed();
+            await wait(this.speed);
+        }
     }
 
     drop() {
-        this.state.drop();
-        this.render();
-    }
-
-    rotate(rotation: Rotation) {
-        this.state.rotate(rotation);
-        this.renderer.rotate(rotation);
-        this.render();
+        const result = this.state.drop();
+        if (result.success) {
+            this.gfx.changed(this.state);
+            this.gfx.drop();
+            this.sfx.drop();
+        }
+        return result;
     }
 
     elapsed() {
         this.state.check();
-        this.state.fall();
-        this.render();
+        const result = this.state.fall();
+        if (result.success) {
+            this.gfx.changed(this.state);
+            this.sfx.fall();
+        }
+        return result;
     }
 
     render() {
-        this.renderer.clear();
-        this.state.render(this.renderer);
-        this.renderer.render();
-        window.requestAnimationFrame(this.render.bind(this));
+        let last = 0;
+        const callback = (time: number) => {
+            const delta = time - last;
+            last = time;
+            this.gfx.render(delta);
+            window.requestAnimationFrame(callback);
+        };
+        callback(0);
     }
 }
