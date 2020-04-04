@@ -1,7 +1,7 @@
 import * as gbs from "gameboy-sound";
 
 export class Sfx {
-    play() {
+    music() {
         // TODO: play background sound
     }
 

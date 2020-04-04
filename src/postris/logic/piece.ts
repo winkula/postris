@@ -1,4 +1,3 @@
-import { Gfx } from "../ui/gfx";
 import { Vec } from "../helpers";
 import { Rotation, Direction } from "./state";
 
@@ -25,7 +24,7 @@ export class Tetrimino {
         this.texture = texture;
     }
 
-    blocks(rotation: number) {
+    blocks(rotation: number = 0) {
         if (rotation < 0 || rotation > 3) throw new Error(`Invalid rotation: ${rotation}`);
         return this.shape[rotation];
     }
@@ -60,10 +59,6 @@ export class Piece {
         const fullRotation = 4;
         const newRotation = (this.rotation + rotation + fullRotation) % fullRotation;
         return new Piece(this.tetrimino, this.position, newRotation);
-    }
-
-    render(gfx: Gfx) {
-        gfx.renderPiece(this);
     }
 }
 

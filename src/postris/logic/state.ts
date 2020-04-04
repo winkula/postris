@@ -1,7 +1,9 @@
-import { Board } from "./board";
+import { Matrix } from "./matrix";
 import { tetriminos, Piece, Tetrimino } from "./piece";
 import { Gfx } from "../ui/gfx";
 import { choice, range } from "../helpers";
+import { calculateScore, calculateLevel } from "./helpers";
+import { EquirectangularReflectionMapping } from "three";
 
 export enum Direction {
     Left = -1,
@@ -16,33 +18,41 @@ export enum Rotation {
 export class ActionResult {
     success: boolean = false;
     spawned: boolean = false;
+    locked: boolean = false;
     gameOver: boolean = false;
-    lines: number = 0;
-    previous?: Piece;
+    lines: number[] = [];
+    before?: Piece;
+    after?: Piece;
 }
 
 export class State {
-    board: Board;
-    current!: Piece;
-    next?: Tetrimino;
-    level: number = 1;
+    matrix: Matrix;
+    piece!: Piece;
+    preview!: Tetrimino;
+    startLevel: number;
+    level: number;
     lines: number = 0;
     score: number = 0;
     time: number = 55;
 
-    constructor() {
-        this.board = new Board(10, 20);
+    constructor(startLevel: number) {
+        if (startLevel <= 0) {
+            throw new Error(`Invalid startLevel: ${startLevel}. Must be greated than 0.`);
+        }
+        this.startLevel = startLevel;
+        this.level = startLevel;
+        this.matrix = new Matrix(10, 20);
         this.spawn();
     }
 
     get fallHeight() {
         return Math.min(
-            ...this.current.blocks.map(block => this.board.fallSpace(block))
+            ...this.piece.blocks.map(block => this.matrix.fallSpace(block))
         );
     }
 
     get shadow() {
-        return this.current.fall(this.fallHeight);
+        return this.piece.fall(this.fallHeight);
     }
 
     get isLanded() {
@@ -54,67 +64,71 @@ export class State {
     }
 
     private spawn() {
-        const next = choice(tetriminos);
-        const newCurrent = new Piece(this.next ?? choice(tetriminos), this.board.origin);
-        this.next = next;
-        this.current = newCurrent;
+        const newPreview = choice(tetriminos);
+        const newPiece = new Piece(this.preview ?? choice(tetriminos), this.matrix.origin);
+        this.preview = newPreview;
+        this.piece = newPiece;
     }
 
     private apply(transformed: Piece) {
         if (this.isGameOver) {
             throw new Error(`Game over: you can not continue playing :(`);
         }
-        if (!this.board.isCollision(transformed)) {
-            const previous = this.current;
-            this.current = transformed;
-            return <ActionResult>{ success: true, previous };
+        if (!this.matrix.isCollision(transformed)) {
+            const before = this.piece;
+            this.piece = transformed;
+            return <ActionResult>{ 
+                success: true, 
+                before: before,
+                after: transformed
+             };
         }
         return <ActionResult>{};
     }
 
     move(direction: Direction) {
         return this.apply(
-            this.current.move(direction)
+            this.piece.move(direction)
         );
     }
 
     rotate(rotation: Rotation) {
         return this.apply(
-            this.current.rotate(rotation)
+            this.piece.rotate(rotation)
         );
     }
 
     fall() {
         return this.apply(
-            this.current.fall()
+            this.piece.fall()
         );
     }
 
     drop() {
-        this.apply(
-            this.current.fall(this.fallHeight),
+        const result = this.apply(
+            this.piece.fall(this.fallHeight),
         );
-        return this.check();
+        const resultAfterCheck = this.check();
+        return Object.assign({}, result, resultAfterCheck);
     }
 
     check() {
         if (this.isLanded) {
-            this.board.place(this.current);
-            const lines = this.board.clearLines();
-            this.lines += lines;
+            this.matrix.place(this.piece);
+            const lines = this.matrix.clearLines();
+            this.lines += lines.length;
+            this.score += calculateScore(this.level, lines.length);
+            this.level = calculateLevel(this.startLevel, this.lines);
             this.spawn();
             return <ActionResult>{
                 success: true,
                 spawned: true,
+                locked: true,
                 gameOver: this.isGameOver,
-                lines: lines,
+                lineCount: lines.length,
+                lines: lines
             };
         }
         return <ActionResult>{};
-    }
-
-    render(gfx: Gfx) {
-        this.board?.render(gfx);
-        this.current?.render(gfx);
     }
 }

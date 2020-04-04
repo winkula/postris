@@ -1,4 +1,5 @@
 import { Game } from "./game";
 
-const game = new Game();
+const startLevel = 1;
+const game = new Game(startLevel);
 game.run();

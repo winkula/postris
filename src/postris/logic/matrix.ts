@@ -1,10 +1,14 @@
-import { Gfx } from "../ui/gfx";
-import { Piece, Tetrimino } from "./piece";
+import { Piece } from "./piece";
 import { Vec, range } from "../helpers";
 
 const freeCell = "";
 
-export class Board {
+export class Block {
+    position!: Vec;
+    color!: string;
+}
+
+export class Matrix {
     readonly width: number;
     readonly height: number;
     readonly origin: Vec;
@@ -13,8 +17,29 @@ export class Board {
     constructor(width: number, height: number) {
         this.width = width;
         this.height = height;
-        this.origin = new Vec(Math.round(width / 2 - 1), height - 5);
+        this.origin = new Vec(Math.round(width / 2 - 1), height);
         this.cells = range(height).map(() => range(width).map(() => freeCell));
+    }
+
+    get dimensions() {
+        return new Vec(this.width, this.height);
+    }
+
+    get blocks() {
+        const blocks: Block[] = [];
+        for (const x of range(this.width)) {
+            for (const y of range(this.height)) {
+                const vec = new Vec(x, y);
+                const cellValue = this.get(vec);
+                if (cellValue !== freeCell) {
+                    blocks.push(<Block>{
+                        position: vec,
+                        color: cellValue
+                    });
+                }
+            }
+        }
+        return blocks;
     }
 
     get(block: Vec) {
@@ -36,20 +61,27 @@ export class Board {
             && block.y >= 0 && block.y < this.height;
     }
 
+    isAbove(block: Vec) {
+        return block.y >= this.height;
+    }
+
     isCollision(piece: Piece) {
-        return piece.blocks.find(v =>
-            !this.isFree(v)
+        return piece.blocks.find(block =>
+            !this.isAbove(block) && !this.isFree(block)
         ) !== undefined;
     }
 
     fallSpace(block: Vec) {
-        if (!this.isContained(block)) throw new Error(`Block is not contained in board: ${block}`);
-        for (let h = 0; h < this.height; h++) {
-            if (!this.isFree(new Vec(block.x, block.y - h))) {
-                return h - 1;
+        for (let distance = 0; distance <= block.y; distance++) {
+            const newPosition = block.add(new Vec(0, -distance));
+            if (this.isAbove(newPosition)) {
+                continue;
+            }
+            if (!this.isFree(newPosition)) {
+                return distance - 1;
             }
         }
-        return 0;
+        return block.y;
     }
 
     place(piece: Piece) {
@@ -60,22 +92,10 @@ export class Board {
 
     clearLines() {
         const isFull = (row: Array<string | undefined>) => row.filter(cell => cell === freeCell).length === 0;
+        const fullLines = range(this.height).filter(i => isFull(this.cells[i]));
         this.cells = this.cells.filter(row => !isFull(row));
         const cleared = this.height - this.cells.length;
         range(cleared).forEach(i => this.cells.push(range(this.width).map(() => freeCell)));
-        return cleared;
-    }
-
-    render(gfx: Gfx) {
-        const getColor = (value: string | undefined) => {
-            if (!value || value == freeCell) return "black";
-            return value;
-        };
-        for (const x of range(this.width)) {
-            for (const y of range(this.height)) {
-                const vec = new Vec(x, y);
-                gfx.renderBlock(vec, getColor(this.get(vec)));
-            }
-        }
+        return fullLines;
     }
 }

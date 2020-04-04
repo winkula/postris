@@ -2,6 +2,7 @@ import { Gfx } from "./ui/gfx";
 import { State, Direction, Rotation, ActionResult } from "./logic/state";
 import { Sfx } from "./ui/sfx";
 import { wait } from "./helpers";
+import { calculateSpeed } from "./logic/helpers";
 
 enum KeyCode {
     Left = 37,
@@ -13,94 +14,99 @@ enum KeyCode {
 }
 
 interface ActionMap {
-    [key: number]: Function | null;
+    [key: number]: ActionDefinition;
+}
+
+interface ActionDefinition {
+    action: () => ActionResult;
+    gfx?: (result: ActionResult) => Promise<void>;
+    sfx?: (result: ActionResult) => void;
 }
 
 export class Game {
     state: State;
-    dimensions: number[];
-    actionMap!: ActionMap;
-    speed: number = 1000 / 1.5;
-    timerHandle?: NodeJS.Timeout;
+    actions!: ActionMap;
+    speed: number;
     running = true;
-
+    executing = false;
     gfx: Gfx;
     sfx: Sfx;
 
-    constructor() {
-        this.state = new State();
-        this.dimensions = [10, 10];
-        this.gfx = new Gfx(this.state);
-        this.actionMap = {
-            [KeyCode.Left]: () => this.do(
-                () => this.state.move(Direction.Left),
-                () => this.sfx.move()
-            ),
-            [KeyCode.Right]: () => this.do(
-                () => this.state.move(Direction.Right),
-                () => this.sfx.move()
-            ),
-            [KeyCode.Down]: () => this.do(
-                () => this.state.fall(),
-                () => this.sfx.fall()
-            ),
-            [KeyCode.Up]: () => this.do(
-                () => this.drop(),
-                () => this.sfx.drop()
-            ),
-            [KeyCode.X]: () => this.do(
-                () => this.state.rotate(Rotation.Clockwise),
-                () => this.sfx.rotate()
-            ),
-            [KeyCode.Y]: () => this.do(
-                () => this.state.rotate(Rotation.CounterClockwise),
-                () => this.sfx.rotate()
-            ),
-        }
+    constructor(startLevel: number = 1) {
+        this.state = new State(startLevel);
+        this.speed = calculateSpeed(startLevel);
+        this.gfx = new Gfx(this.state.matrix.dimensions);
         this.sfx = new Sfx();
+        this.actions = {
+            [KeyCode.Left]: <ActionDefinition>{
+                action: () => this.state.move(Direction.Left),
+                sfx: this.sfx.move
+            },
+            [KeyCode.Left]: <ActionDefinition>{
+                action: () => this.state.move(Direction.Left),
+                sfx: this.sfx.move
+            },
+            [KeyCode.Right]: <ActionDefinition>{
+                action: () => this.state.move(Direction.Right),
+                sfx: this.sfx.move
+            },
+            [KeyCode.Down]: <ActionDefinition>{
+                action: () => this.state.fall(),
+                sfx: this.sfx.fall
+            },
+            [KeyCode.Up]: <ActionDefinition>{
+                action: () => this.state.drop(),
+                gfx: async (result) => await this.gfx.animateDrop(result.before!, result.after!),
+                sfx: this.sfx.drop
+            },
+            [KeyCode.X]: <ActionDefinition>{
+                action: () => this.state.rotate(Rotation.Clockwise),
+                sfx: this.sfx.rotate
+            },
+            [KeyCode.Y]: <ActionDefinition>{
+                action: () => this.state.rotate(Rotation.CounterClockwise),
+                sfx: this.sfx.rotate
+            },
+        }
     }
 
     async run() {
-        this.gfx.init();
-        await this.init();
-    }
-
-    async init() {
         await this.gfx.init();
-        window.onkeydown = (event: KeyboardEvent) => {
-            const action = this.actionMap[event.keyCode];
-            action?.();
-        };
-        this.sfx.play();
+        window.onkeydown = async (event: KeyboardEvent) =>
+            await this.execute(this.actions[event.keyCode]);
+        this.sfx.music();
         this.render();
         this.loop();
     }
 
-    do(action: () => ActionResult, sound?: () => void) {
-        if (!this.running) {
+    async execute(action: ActionDefinition) {
+        if (!this.running || this.executing) {
             return;
         }
-        try {
-            const result = action?.();
-            if (result.success) {
-                sound?.();
-                this.gfx.changed(this.state);
+        this.executing = true;
+        const result = action?.action();
+        if (result.success) {
+            action.sfx?.(result);
+
+            this.gfx.renderPiece(result.after!);
+            await action.gfx?.(result);
+
+            if (result.locked) {
+                if (result.lines?.length > 0) {
+                    await this.gfx.animateClear(result.lines);
+                    this.speed = calculateSpeed(this.state.level);
+                }
+                this.gfx.renderMatrix(this.state.matrix);
+                this.gfx.renderPiece(this.state.piece);
+                this.gfx.renderPreview(this.state.preview);
             }
-            if (result.lines) {
-                this.gfx.lines(result.lines);
-            }
-            if (result.spawned) {
-            }
-            if (result.gameOver) {
-                this.running = false;
-                console.log("Game is over");
-            }
-        } catch (error) {
-            this.running = false;
-            if (this.timerHandle) {
-                clearTimeout(this.timerHandle);
-            }
+            this.gfx.renderText(this.state);
         }
+        if (result.gameOver) {
+            this.running = false;
+            console.log("Game is over");
+        }
+        this.executing = false;
     }
 
     async loop() {
@@ -110,23 +116,19 @@ export class Game {
         }
     }
 
-    drop() {
-        const result = this.state.drop();
-        if (result.success) {
-            this.gfx.changed(this.state);
-            this.gfx.drop();
-            this.sfx.drop();
-        }
-        return result;
-    }
-
     elapsed() {
+        if (!this.running || this.executing) {
+            return;
+        }
         this.state.check();
         const result = this.state.fall();
         if (result.success) {
-            this.gfx.changed(this.state);
+            this.gfx.renderMatrix(this.state.matrix);
+            this.gfx.renderPiece(this.state.piece);
+            this.gfx.renderPreview(this.state.preview);
             this.sfx.fall();
         }
+        this.gfx.renderText(this.state);
         return result;
     }
 
@@ -135,6 +137,7 @@ export class Game {
         const callback = (time: number) => {
             const delta = time - last;
             last = time;
+            this.state.time = Math.floor(time / 1000);
             this.gfx.render(delta);
             window.requestAnimationFrame(callback);
         };
