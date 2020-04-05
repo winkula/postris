@@ -1,18 +1,18 @@
-import { Piece } from "./piece";
+import { Piece, TetriminoType } from "./piece";
 import { Vec, range } from "../helpers";
 
-const freeCell = "";
+const freeCell = undefined;
 
 export class Block {
     position!: Vec;
-    color!: string;
+    type?: TetriminoType;
 }
 
 export class Matrix {
     readonly width: number;
     readonly height: number;
     readonly origin: Vec;
-    private cells: (string | undefined)[][];
+    private cells: (TetriminoType | undefined)[][];
 
     constructor(width: number, height: number) {
         this.width = width;
@@ -34,7 +34,7 @@ export class Matrix {
                 if (cellValue !== freeCell) {
                     blocks.push(<Block>{
                         position: vec,
-                        color: cellValue
+                        type: cellValue
                     });
                 }
             }
@@ -46,9 +46,9 @@ export class Matrix {
         return this.cells[block.y]?.[block.x];
     }
 
-    set(block: Vec, color: string) {
+    set(block: Vec, type: TetriminoType) {
         if (this.isContained(block)) {
-            this.cells[block.y][block.x] = color;
+            this.cells[block.y][block.x] = type;
         }
     }
 
@@ -56,9 +56,9 @@ export class Matrix {
         return this.get(block) === freeCell;
     }
 
-    isContained(block: Vec) {
+    isContained(block: Vec, checkTop: boolean = true) {
         return block.x >= 0 && block.x < this.width
-            && block.y >= 0 && block.y < this.height;
+            && block.y >= 0 && (block.y < this.height || !checkTop);
     }
 
     isAbove(block: Vec) {
@@ -67,7 +67,7 @@ export class Matrix {
 
     isCollision(piece: Piece) {
         return piece.blocks.find(block =>
-            !this.isAbove(block) && !this.isFree(block)
+            !this.isContained(block, false) || !this.isFree(block)
         ) !== undefined;
     }
 
@@ -86,12 +86,12 @@ export class Matrix {
 
     place(piece: Piece) {
         piece.blocks.forEach(v =>
-            this.set(v, piece.tetrimino.color)
+            this.set(v, piece.tetrimino.type)
         );
     }
 
     clearLines() {
-        const isFull = (row: Array<string | undefined>) => row.filter(cell => cell === freeCell).length === 0;
+        const isFull = (row: Array<TetriminoType | undefined>) => row.filter(cell => cell === freeCell).length === 0;
         const fullLines = range(this.height).filter(i => isFull(this.cells[i]));
         this.cells = this.cells.filter(row => !isFull(row));
         const cleared = this.height - this.cells.length;

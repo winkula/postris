@@ -25,7 +25,7 @@ interface ActionDefinition {
 
 export class Game {
     state: State;
-    actions!: ActionMap;
+    actions: ActionMap;
     speed: number;
     running = true;
     executing = false;
@@ -77,17 +77,21 @@ export class Game {
     }
 
     private async execute(action: ActionDefinition) {
-        if (!this.running || this.executing) {
+        if (!this.running || this.executing || this.state.isGameOver) {
             return;
         }
         this.executing = true;
         const result = action?.action();
-        if (result.success) {
+        if (result.gameOver) {
+            this.running = false;
+            console.log("Game is over");
+        }
+        else if (result.success) {
             action.sfx?.(result);
 
-            this.gfx.renderPiece(result.after!);
+            this.gfx.renderPiece(result.after);
+            this.gfx.renderShadow();
             await action.gfx?.(result);
-            this.gfx.renderShadow(this.state.shadow);
 
             if (result.locked) {
                 if (result.lines?.length > 0) {
@@ -95,15 +99,11 @@ export class Game {
                     this.speed = calculateSpeed(this.state.level);
                 }
                 this.gfx.renderMatrix(this.state.matrix);
-                this.gfx.renderPiece(this.state.piece);
-                this.gfx.renderShadow(this.state.shadow);
                 this.gfx.renderPreview(this.state.preview);
             }
+            this.gfx.renderPiece(this.state.piece);
+            this.gfx.renderShadow(this.state.shadow);
             this.gfx.renderText(this.state);
-        }
-        if (result.gameOver) {
-            this.running = false;
-            console.log("Game is over");
         }
         this.executing = false;
     }

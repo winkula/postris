@@ -1,7 +1,7 @@
 import { Vec } from "../helpers";
 import { Rotation, Direction } from "./state";
 
-enum TetriminoType {
+export enum TetriminoType {
     O = 0,
     I = 1,
     S = 2,
