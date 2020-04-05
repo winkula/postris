@@ -1,9 +1,7 @@
 import { Matrix } from "./matrix";
 import { tetriminos, Piece, Tetrimino } from "./piece";
-import { Gfx } from "../ui/gfx";
-import { choice, range } from "../helpers";
+import { choice } from "../helpers";
 import { calculateScore, calculateLevel } from "./helpers";
-import { EquirectangularReflectionMapping } from "three";
 
 export enum Direction {
     Left = -1,
@@ -33,7 +31,7 @@ export class State {
     level: number;
     lines: number = 0;
     score: number = 0;
-    time: number = 55;
+    time: number = 0;
 
     constructor(startLevel: number) {
         if (startLevel <= 0) {
@@ -77,11 +75,11 @@ export class State {
         if (!this.matrix.isCollision(transformed)) {
             const before = this.piece;
             this.piece = transformed;
-            return <ActionResult>{ 
-                success: true, 
+            return <ActionResult>{
+                success: true,
                 before: before,
                 after: transformed
-             };
+            };
         }
         return <ActionResult>{};
     }
@@ -105,11 +103,17 @@ export class State {
     }
 
     drop() {
-        const result = this.apply(
-            this.piece.fall(this.fallHeight),
+        return Object.assign({},
+            this.apply(this.piece.fall(this.fallHeight)),
+            this.check()
         );
-        const resultAfterCheck = this.check();
-        return Object.assign({}, result, resultAfterCheck);
+    }
+
+    elapsed() {
+        return Object.assign({},
+            this.check(),
+            this.apply(this.piece.fall())
+        );
     }
 
     check() {

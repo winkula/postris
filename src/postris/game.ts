@@ -42,10 +42,6 @@ export class Game {
                 action: () => this.state.move(Direction.Left),
                 sfx: this.sfx.move
             },
-            [KeyCode.Left]: <ActionDefinition>{
-                action: () => this.state.move(Direction.Left),
-                sfx: this.sfx.move
-            },
             [KeyCode.Right]: <ActionDefinition>{
                 action: () => this.state.move(Direction.Right),
                 sfx: this.sfx.move
@@ -57,7 +53,7 @@ export class Game {
             [KeyCode.Up]: <ActionDefinition>{
                 action: () => this.state.drop(),
                 gfx: async (result) => await this.gfx.animateDrop(result.before!, result.after!),
-                sfx: this.sfx.drop
+                sfx: this.sfx.drop,
             },
             [KeyCode.X]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.Clockwise),
@@ -70,16 +66,17 @@ export class Game {
         }
     }
 
-    async run() {
+    async start() {
         await this.gfx.init();
         window.onkeydown = async (event: KeyboardEvent) =>
             await this.execute(this.actions[event.keyCode]);
         this.sfx.music();
+        this.gfx.renderPreview(this.state.preview);
         this.render();
         this.loop();
     }
 
-    async execute(action: ActionDefinition) {
+    private async execute(action: ActionDefinition) {
         if (!this.running || this.executing) {
             return;
         }
@@ -90,6 +87,7 @@ export class Game {
 
             this.gfx.renderPiece(result.after!);
             await action.gfx?.(result);
+            this.gfx.renderShadow(this.state.shadow);
 
             if (result.locked) {
                 if (result.lines?.length > 0) {
@@ -98,6 +96,7 @@ export class Game {
                 }
                 this.gfx.renderMatrix(this.state.matrix);
                 this.gfx.renderPiece(this.state.piece);
+                this.gfx.renderShadow(this.state.shadow);
                 this.gfx.renderPreview(this.state.preview);
             }
             this.gfx.renderText(this.state);
@@ -109,36 +108,21 @@ export class Game {
         this.executing = false;
     }
 
-    async loop() {
+    private async loop() {
         while (this.running) {
-            this.elapsed();
+            await this.execute(<ActionDefinition>{
+                action: () => this.state.elapsed(),
+            });
             await wait(this.speed);
         }
     }
 
-    elapsed() {
-        if (!this.running || this.executing) {
-            return;
-        }
-        this.state.check();
-        const result = this.state.fall();
-        if (result.success) {
-            this.gfx.renderMatrix(this.state.matrix);
-            this.gfx.renderPiece(this.state.piece);
-            this.gfx.renderPreview(this.state.preview);
-            this.sfx.fall();
-        }
-        this.gfx.renderText(this.state);
-        return result;
-    }
-
-    render() {
+    private render() {
         let last = 0;
         const callback = (time: number) => {
-            const delta = time - last;
-            last = time;
             this.state.time = Math.floor(time / 1000);
-            this.gfx.render(delta);
+            this.gfx.render(time - last);
+            last = time;
             window.requestAnimationFrame(callback);
         };
         callback(0);
