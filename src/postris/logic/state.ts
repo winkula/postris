@@ -69,10 +69,7 @@ export class State {
     }
 
     private apply(transformed: Piece) {
-        if (this.isGameOver) {
-            throw new Error(`Game over: you can not continue playing :(`);
-        }
-        if (!this.matrix.isCollision(transformed)) {
+        if (!this.isGameOver && !this.matrix.isCollision(transformed)) {
             const before = this.piece;
             this.piece = transformed;
             return <ActionResult>{

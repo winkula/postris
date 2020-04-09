@@ -27,7 +27,6 @@
     "webpack-dev-server": "^3.10.3"
   },
   "dependencies": {
-    "gameboy-sound": "^0.1.2",
     "three": "^0.114.0"
   }
 }

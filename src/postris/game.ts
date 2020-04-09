@@ -14,7 +14,7 @@ enum KeyCode {
 }
 
 interface ActionMap {
-    [key: number]: ActionDefinition;
+    [key: number]: ActionDefinition | undefined;
 }
 
 interface ActionDefinition {
@@ -40,36 +40,40 @@ export class Game {
         this.actions = {
             [KeyCode.Left]: <ActionDefinition>{
                 action: () => this.state.move(Direction.Left),
-                sfx: this.sfx.move
+                sfx: () => this.sfx.move()
             },
             [KeyCode.Right]: <ActionDefinition>{
                 action: () => this.state.move(Direction.Right),
-                sfx: this.sfx.move
+                sfx: () => this.sfx.move()
             },
             [KeyCode.Down]: <ActionDefinition>{
                 action: () => this.state.fall(),
-                sfx: this.sfx.fall
+                sfx: () => this.sfx.move()
             },
             [KeyCode.Up]: <ActionDefinition>{
                 action: () => this.state.drop(),
                 gfx: async (result) => await this.gfx.animateDrop(result.before!, result.after!),
-                sfx: this.sfx.drop,
+                sfx: () => this.sfx.drop(),
             },
             [KeyCode.X]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.Clockwise),
-                sfx: this.sfx.rotate
+                sfx: () => this.sfx.rotate()
             },
             [KeyCode.Y]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.CounterClockwise),
-                sfx: this.sfx.rotate
+                sfx: () => this.sfx.rotate()
             },
         }
     }
 
     async start() {
         await this.gfx.init();
-        window.onkeydown = async (event: KeyboardEvent) =>
-            await this.execute(this.actions[event.keyCode]);
+        window.onkeydown = async (event: KeyboardEvent) => {
+            const action = this.actions[event.keyCode];
+            if (action) {
+                await this.execute(action);
+            }
+        }
         this.sfx.music();
         this.gfx.renderPreview(this.state.preview);
         this.render();
@@ -81,10 +85,10 @@ export class Game {
             return;
         }
         this.executing = true;
-        const result = action?.action();
+        const result = action.action();
         if (result.gameOver) {
             this.running = false;
-            console.log("Game is over");
+            this.sfx.gameOver();
         }
         else if (result.success) {
             action.sfx?.(result);
@@ -95,6 +99,7 @@ export class Game {
 
             if (result.locked) {
                 if (result.lines?.length > 0) {
+                    this.sfx.scored();
                     await this.gfx.animateClear(result.lines);
                     this.speed = calculateSpeed(this.state.level);
                 }
