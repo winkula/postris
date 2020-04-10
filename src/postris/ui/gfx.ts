@@ -5,17 +5,8 @@ import { State } from "../logic/state";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createWalls, createFont, createTopLight, createFrontLight, createBlock, getTexture, createTweenAnimation, createTrail } from "./gfx-helpers";
 import { Matrix } from "../logic/matrix";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass";
-import { LuminosityShader } from "three/examples/jsm/shaders/LuminosityShader";
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-
-import { GUI } from "three/examples/jsm/libs/dat.gui.module";
 
 let useDebug = false;
-let useComposer = false;
 
 export class Gfx {
     private scene: THREE.Scene;
@@ -30,7 +21,6 @@ export class Gfx {
 
     private readonly camera: THREE.PerspectiveCamera;
     private readonly renderer: THREE.WebGLRenderer;
-    private readonly composer: EffectComposer;
 
     private readonly ambientLight: THREE.AmbientLight;
     private readonly directionalLightTop: THREE.DirectionalLight;
@@ -80,7 +70,6 @@ export class Gfx {
         window.onresize = () => {
             //this.renderer.setPixelRatio(window.devicePixelRatio);
             this.renderer.setSize(window.innerWidth, window.innerHeight);
-            this.composer.setSize(window.innerWidth, window.innerHeight);
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
         };
@@ -102,76 +91,19 @@ export class Gfx {
         }
 
         this.mixer = new THREE.AnimationMixer(this.camera);
-
-        const renderScene = new RenderPass(this.scene, this.camera);
-
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2, 0.5, 0);
-        //this.renderer.toneMappingExposure = Math.pow(2, 4.0);
-
-        const glitchPass = new GlitchPass();
-
-        this.composer = new EffectComposer(this.renderer);
-        this.composer.addPass(renderScene);
-        //this.composer.addPass(bloomPass);
-        //this.composer.addPass(glitchPass);
-        //this.composer.addPass(filmPass);
-
-        var luminosityPass = new ShaderPass(LuminosityShader);
-        this.composer.addPass(luminosityPass);
-
-        let params = {
-            exposure: 1,
-            bloomStrength: 1.5,
-            bloomThreshold: 0,
-            bloomRadius: 0,
-            useDebug: false,
-            useBloom: true,
-            glitch: () => { glitchPass.enabled = true }
-        };
-
-        const gui = new GUI();
-        gui.add(params, 'exposure', 0.1, 2).onChange((value: any) => {
-            this.renderer.toneMappingExposure = Math.pow(value, 4.0);
-        });
-        gui.add(params, 'bloomThreshold', 0.0, 1.0).onChange((value: any) => {
-            bloomPass.threshold = Number(value);
-        });
-        gui.add(params, 'bloomStrength', 0.0, 3.0).onChange((value: any) => {
-            bloomPass.strength = Number(value);
-        });
-        gui.add(params, 'bloomRadius', 0.0, 1.0).step(0.01).onChange((value: any) => {
-            bloomPass.radius = Number(value);
-        });
-        gui.add(params, 'useBloom').onChange((value: any) => {
-            useComposer = Boolean(value);
-        });
-        gui.add(params, 'useDebug').onChange((value: any) => {
-            useDebug = Boolean(value);
-        });
-        gui.add(params, 'glitch');
-
     }
 
     async init() {
-        /*
-        O = 0,
-        I = 1,
-        S = 2,
-        Z = 3,
-        L = 4,
-        J = 5,
-        T = 6
-        */
+        // O = 0, I = 1, S = 2, Z = 3, L = 4, J = 5, T = 6
         const urls = [
             "public/textures/dispobox.png",
             "public/textures/fragile.png",
-            "public/textures/box.png",            
+            "public/textures/box.png",
             "public/textures/zalando.png",
             "public/textures/letters.png",
             "public/textures/box2.png",
             "public/textures/eco.png",
         ];
-
         this.textures = await Promise.all(urls.map(url => getTexture(url)));
         this.animateCamera();
     }
@@ -180,7 +112,7 @@ export class Gfx {
         canvas.style.position = "absolute";
         canvas.style.top = "0";
         canvas.style.left = "0";
-        //canvas.style.zIndex = "1000";
+        canvas.style.zIndex = "1000";
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
@@ -193,11 +125,7 @@ export class Gfx {
 
     render(delta: number) {
         this.mixer?.update(delta / 1000);
-        if (useComposer) {
-            this.composer.render();
-        } else {
-            this.renderer.render(this.scene, this.camera);
-        }
+        this.renderer.render(this.scene, this.camera);
     }
 
     renderMatrix(matrix: Matrix) {
@@ -207,7 +135,12 @@ export class Gfx {
         );
     }
 
-    renderPiece(piece?: Piece) {
+    renderPiece(piece?: Piece, shadow?: Piece) {
+        this.renderPieceOnly(piece);
+        this.renderShadowOnly(piece);
+    }
+
+    private renderPieceOnly(piece?: Piece) {
         this.piece.children = [];
         if (!piece) return;
         const texture = this.textures[piece.tetrimino.type];
@@ -216,7 +149,7 @@ export class Gfx {
         )
     }
 
-    renderShadow(piece?: Piece) {
+    private renderShadowOnly(piece?: Piece) {
         this.shadow.children = [];
         if (!piece) return;
         const texture = this.textures[piece.tetrimino.type];

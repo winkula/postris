@@ -10,7 +10,8 @@ enum KeyCode {
     Right = 39,
     Down = 40,
     Y = 89,
-    X = 88
+    X = 88,
+    R = 82
 }
 
 interface ActionMap {
@@ -63,6 +64,10 @@ export class Game {
                 action: () => this.state.rotate(Rotation.CounterClockwise),
                 sfx: () => this.sfx.rotate()
             },
+            [KeyCode.R]: <ActionDefinition>{
+                action: () => { var r = new ActionResult(); r.success = true; return r; },
+                sfx: () => this.sfx.gameOver()
+            },
         }
     }
 
@@ -74,7 +79,7 @@ export class Game {
                 await this.execute(action);
             }
         }
-        this.sfx.music();
+        this.sfx.startMusic();
         this.gfx.renderPreview(this.state.preview);
         this.render();
         this.loop();
@@ -85,31 +90,37 @@ export class Game {
             return;
         }
         this.executing = true;
+
         const result = action.action();
         if (result.gameOver) {
             this.running = false;
+            this.sfx.stopMusic();
             this.sfx.gameOver();
+            this.gfx.renderPiece(this.state.piece, undefined);
         }
         else if (result.success) {
             action.sfx?.(result);
 
-            this.gfx.renderPiece(result.after);
-            this.gfx.renderShadow();
+            this.gfx.renderPiece(result.after, undefined);
             await action.gfx?.(result);
 
             if (result.locked) {
                 if (result.lines?.length > 0) {
-                    this.sfx.scored();
+                    this.sfx.scored(result.lines?.length);
                     await this.gfx.animateClear(result.lines);
                     this.speed = calculateSpeed(this.state.level);
                 }
-                this.gfx.renderMatrix(this.state.matrix);
-                this.gfx.renderPreview(this.state.preview);
             }
-            this.gfx.renderPiece(this.state.piece);
-            this.gfx.renderShadow(this.state.shadow);
+
+            this.gfx.renderPiece(this.state.piece, this.state.shadow);
             this.gfx.renderText(this.state);
         }
+
+        if (result.locked) {
+            this.gfx.renderMatrix(this.state.matrix);
+            this.gfx.renderPreview(this.state.preview);
+        }
+
         this.executing = false;
     }
 
@@ -123,10 +134,12 @@ export class Game {
     }
 
     private render() {
-        let last = 0;
+        let last: number | undefined = undefined;
         const callback = (time: number) => {
-            this.state.time = Math.floor(time / 1000);
-            this.gfx.render(time - last);
+            if (last) {
+                this.state.time = Math.floor(time / 1000);
+                this.gfx.render(time - last);
+            }
             last = time;
             window.requestAnimationFrame(callback);
         };

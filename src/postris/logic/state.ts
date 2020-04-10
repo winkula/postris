@@ -15,7 +15,6 @@ export enum Rotation {
 
 export class ActionResult {
     success: boolean = false;
-    spawned: boolean = false;
     locked: boolean = false;
     gameOver: boolean = false;
     lines: number[] = [];
@@ -81,6 +80,28 @@ export class State {
         return <ActionResult>{};
     }
 
+    private check() {
+        if (this.isLanded) {
+            const before = this.piece;
+            this.matrix.place(this.piece);
+            const lines = this.matrix.clearLines();
+            this.lines += lines.length;
+            this.score += calculateScore(this.level, lines.length);
+            this.level = calculateLevel(this.startLevel, this.lines);
+            this.spawn();
+            return <ActionResult>{
+                success: true,
+                locked: true,
+                before: before,
+                after: this.piece,
+                gameOver: this.isGameOver,
+                lineCount: lines.length,
+                lines: lines
+            };
+        }
+        return <ActionResult>{};
+    }
+
     move(direction: Direction) {
         return this.apply(
             this.piece.move(direction)
@@ -111,25 +132,5 @@ export class State {
             this.check(),
             this.apply(this.piece.fall())
         );
-    }
-
-    check() {
-        if (this.isLanded) {
-            this.matrix.place(this.piece);
-            const lines = this.matrix.clearLines();
-            this.lines += lines.length;
-            this.score += calculateScore(this.level, lines.length);
-            this.level = calculateLevel(this.startLevel, this.lines);
-            this.spawn();
-            return <ActionResult>{
-                success: true,
-                spawned: true,
-                locked: true,
-                gameOver: this.isGameOver,
-                lineCount: lines.length,
-                lines: lines
-            };
-        }
-        return <ActionResult>{};
     }
 }
