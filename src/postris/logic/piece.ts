@@ -13,15 +13,11 @@ export enum TetriminoType {
 
 export class Tetrimino {
     readonly type: TetriminoType;
-    readonly color: string;
     readonly shape: Vec[][];
-    readonly texture?: string;
 
-    constructor(type: TetriminoType, color: string, shape: Vec[][], texture?: string) {
+    constructor(type: TetriminoType, shape: Vec[][]) {
         this.type = type;
-        this.color = color;
         this.shape = shape;
-        this.texture = texture;
     }
 
     blocks(rotation: number = 0) {
@@ -63,43 +59,43 @@ export class Piece {
 }
 
 export const tetriminos = [
-    new Tetrimino(TetriminoType.O, "cyan", [
+    new Tetrimino(TetriminoType.O, [
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)]
     ]),
-    new Tetrimino(TetriminoType.I, "yellow", [
+    new Tetrimino(TetriminoType.I, [
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(2, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(0, 2)],
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(2, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(0, 2)]
     ]),
-    new Tetrimino(TetriminoType.T, "purple", [
+    new Tetrimino(TetriminoType.T, [
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, 0)]
     ]),
-    new Tetrimino(TetriminoType.S, "green", [
+    new Tetrimino(TetriminoType.S, [
         [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0)],
         [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0)]
     ]),
-    new Tetrimino(TetriminoType.Z, "red", [
+    new Tetrimino(TetriminoType.Z, [
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, -1)],
         [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(0, -1), new Vec(0, 0), new Vec(1, -1)],
         [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(0, 1)]
     ]),
-    new Tetrimino(TetriminoType.J, "blue", [
+    new Tetrimino(TetriminoType.J, [
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, -1), new Vec(1, 0)],
         [new Vec(-1, -1), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(-1, 1), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(0, -1), new Vec(0, 0), new Vec(0, 1), new Vec(1, 1)]
     ]),
-    new Tetrimino(TetriminoType.L, "orange", [
+    new Tetrimino(TetriminoType.L, [
         [new Vec(-1, -1), new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0)],
         [new Vec(-1, 1), new Vec(0, -1), new Vec(0, 0), new Vec(0, 1)],
         [new Vec(-1, 0), new Vec(0, 0), new Vec(1, 0), new Vec(1, 1)],

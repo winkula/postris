@@ -17,6 +17,7 @@ interface Note {
     time: number;
     duration: number;
     midi: number;
+    velocity?: number;
 }
 
 interface PulseOscillatorNode extends OscillatorNode {
@@ -29,7 +30,7 @@ export class Envelope {
     sustain: number;
     release: number;
 
-    constructor(attack: number, decay: number, sustain: number, release: number) {
+    constructor(attack: number = 0, decay: number = 0, sustain: number = 1, release: number = 0) {
         this.attack = attack;
         this.decay = decay;
         this.sustain = sustain;
@@ -48,84 +49,31 @@ function createAudioBuffer(length: number, factory: (i: number) => number) {
 }
 
 function createNoiseBuffer(length: number, repeat: number) {
-    function random(seed: number) {
+    const random = (seed: number) => {
         const x = Math.sin(seed) * 10000;
         return x - Math.floor(x);
     }
-    function bitcrush(value: number, steps: number) {
-        return Math.floor(value * steps) / steps;
-    }
-    return createAudioBuffer(length, i => {
-        const index = Math.floor(i / repeat);
-        const value = random(index);
-        const bitcrushed = bitcrush(value, 256);
-        const normalized = bitcrushed * 2 - 1;
-        return normalized;
-    });
+    const normalize = (x: number) => x * 2 - 1;
+    const bitcrush = (value: number, steps: number) => Math.floor(value * steps) / steps;
+    return createAudioBuffer(length, i =>
+        normalize(bitcrush(random(Math.floor(i / repeat)), 256))
+    );
 }
 
-function applyEnvelope(param: AudioParam, volume: number, duration: number, envelope: Envelope) {
-    param.cancelScheduledValues(ctx.currentTime);
-    param.setValueAtTime(0, ctx.currentTime);
-    param.linearRampToValueAtTime(volume, ctx.currentTime + envelope.attack);
-    param.linearRampToValueAtTime(volume * envelope.sustain, ctx.currentTime + envelope.attack + envelope.decay);
-    param.setValueAtTime(volume * envelope.sustain, ctx.currentTime + Math.max(0, duration - envelope.release));
-    param.linearRampToValueAtTime(0, ctx.currentTime + duration);
+function applyEnvelope(param: AudioParam, volume: number, duration: number, now: number, envelope: Envelope) {
+    //param.cancelScheduledValues(now);
+    param.setValueAtTime(0, now);
+    param.linearRampToValueAtTime(volume, now + envelope.attack);
+    param.linearRampToValueAtTime(volume * envelope.sustain, now + envelope.attack + envelope.decay);
+    param.setValueAtTime(volume * envelope.sustain, now + Math.max(0, duration - envelope.release));
+    param.linearRampToValueAtTime(0, now + duration);
 }
 
-function modulate(target: AudioParam, duration: number, resolution: number, value: (i: number, f: number) => number) {
+function modulate(target: AudioParam, duration: number, resolution: number, now: number, value: (i: number, f: number) => number) {
     for (let i = 0; i < resolution; i++) {
         const factor = i / resolution;
-        target.setValueAtTime(value(i, factor), ctx.currentTime + factor * duration);
+        target.setValueAtTime(value(i, factor), now + factor * duration);
     }
-}
-
-//Pre-calculate the WaveShaper curves so that we can reuse them.
-var pulseCurve = new Float32Array(256);
-for (var i = 0; i < 128; i++) {
-    pulseCurve[i] = -1;
-    pulseCurve[i + 128] = 1;
-}
-var constantOneCurve = new Float32Array(2);
-constantOneCurve[0] = 1;
-constantOneCurve[1] = 1;
-
-//Add a new factory method to the AudioContext object.
-function createPulseOscillator() {
-    //Use a normal oscillator as the basis of our new oscillator.
-    var node = ctx.createOscillator() as PulseOscillatorNode;
-    node.type = "sawtooth";
-
-    //Shape the output into a pulse wave.
-    var pulseShaper = ctx.createWaveShaper();
-    pulseShaper.curve = pulseCurve;
-    node.connect(pulseShaper);
-
-    //Use a GainNode as our new "width" audio parameter.
-    var widthGain = ctx.createGain();
-    widthGain.gain.value = 0; //Default width.
-    node.width = widthGain.gain; //Add parameter to oscillator node.
-    widthGain.connect(pulseShaper);
-
-    //Pass a constant value of 1 into the widthGain – so the "width" setting
-    //is duplicated to its output.
-    var constantOneShaper = ctx.createWaveShaper();
-    constantOneShaper.curve = constantOneCurve;
-    node.connect(constantOneShaper);
-    constantOneShaper.connect(widthGain);
-
-    //Override the oscillator's "connect" and "disconnect" method so that the
-    //new node's output actually comes from the pulseShaper.
-    (node as any).connect = (target: AudioNode) => {
-        console.log(target);
-        console.log(arguments);
-        pulseShaper.connect.apply(pulseShaper, [target as any]);
-    }
-    node.disconnect = () => {
-        pulseShaper.disconnect.apply(pulseShaper, arguments as any);
-    }
-
-    return node;
 }
 
 export function noise(duration: number) {
@@ -144,9 +92,11 @@ export function noise(duration: number) {
 }
 
 export function wave(frequency: number, duration: number) {
+    const now = ctx.currentTime;
+
     const osc = ctx.createOscillator();
     osc.type = "square";
-    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+    osc.frequency.setValueAtTime(frequency, now);
 
     return <Playable>{
         duration: duration,
@@ -160,9 +110,11 @@ export function wave(frequency: number, duration: number) {
 }
 
 export function score(duration: number, lines: number = 1) {
+    const now = ctx.currentTime;
+
     const osc = ctx.createOscillator();
     osc.type = "square";
-    modulate(osc.frequency, duration, 40, (i, f) => (100 + f * 200 * lines) * Math.pow(2, i % 3));
+    modulate(osc.frequency, duration, 40, now, (i, f) => (100 + f * 200 * lines) * Math.pow(2, i % 3));
 
     return <Playable>{
         duration: duration,
@@ -176,10 +128,12 @@ export function score(duration: number, lines: number = 1) {
 }
 
 export function gameOver(duration: number) {
+    const now = ctx.currentTime;
+
     const osc = ctx.createOscillator();
     osc.type = "square";
     const steps = 80;
-    modulate(osc.frequency, duration, steps, (i, f) => (800 + 50 * (-f * 0.3 - Math.floor(i / (steps / 4)))) * Math.pow(2, Math.floor(i / 2) % 2));
+    modulate(osc.frequency, duration, steps, now, (i, f) => (800 + 50 * (-f * 0.3 - Math.floor(i / (steps / 4)))) * Math.pow(2, Math.floor(i / 2) % 2));
 
     return <Playable>{
         duration: duration,
@@ -192,42 +146,70 @@ export function gameOver(duration: number) {
     }
 }
 
-export function melody(notes: any[], speed: number = 1) {
+interface TrackNodes {
+    source: OscillatorNode;
+    amp: GainNode;
+}
+
+export function melody(tracks: Note[][], type: OscillatorType, speed: number = 1) {
+    const now = ctx.currentTime;
+
     const adjustTime = (t: number) => t / speed;
-
-    const osc = ctx.createOscillator();
-    //const osc = createPulseOscillator();
-    //osc.width.setValueAtTime(0.2, ctx.currentTime);
-    //osc.width.linearRampToValueAtTime(0.9, ctx.currentTime + 3);
-    osc.type = "square";
-
+    const trackNodes: TrackNodes[] = [];
     let length = 0;
-    for (const note of notes) {
-        const time = adjustTime(note.time);
-        const duration = adjustTime(note.duration);
-        const freq = 440 * Math.pow(2, (note.midi - 69) / 12);
-        length = Math.max(duration, time + duration);
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+
+    for (const track of tracks) {
+        const source = ctx.createOscillator();
+        source.type = type;
+        const amp = ctx.createGain();
+
+        for (const note of track) {
+            const time = adjustTime(note.time);
+            const duration = adjustTime(note.duration);
+            const freq = 440 * Math.pow(2, (note.midi - 69) / 12);
+            length = Math.max(duration, time + duration);
+            source.frequency.setValueAtTime(freq, now + time);
+            
+            amp.gain.setValueAtTime(0, now + time);
+            amp.gain.linearRampToValueAtTime(note.velocity ?? 1, now + time + Math.min(0.01, duration * 0.9));
+            amp.gain.linearRampToValueAtTime(0, now + time + duration * 0.9);
+        }
+
+        trackNodes.push({ source, amp });
     }
+
+    let running = trackNodes.length;
 
     return <Playable>{
         duration: length,
         start: (target: AudioNode, onended: () => void) => {
-            osc.onended = onended;
-            osc.connect(target);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + length);
+            for (const trackNode of trackNodes) {
+                trackNode.source.onended = () => {
+                    if (--running <= 0) {
+                        onended();
+                    }
+                };
+                trackNode.source.connect(trackNode.amp).connect(target);
+                trackNode.source.start(now);
+                trackNode.source.stop(now + length);
+            }
         },
-        stop: () => osc.stop()
+        stop: () => {
+            for (const trackNode of trackNodes) {
+                trackNode.source.stop();
+                trackNode.amp.disconnect();
+            }
+        }
     }
 }
 
-export async function play(key: string, sound: Playable, envelope = new Envelope(0, 0, 1, 0), volume: number = 1) {
+export async function play(key: string, sound: Playable, volume: number = 1, envelope = new Envelope()) {
     return new Promise(resolve => {
         playing[key]?.stop();
 
         const amp = ctx.createGain();
-        applyEnvelope(amp.gain, volume, sound.duration, envelope);
+        const now = ctx.currentTime;
+        applyEnvelope(amp.gain, volume, sound.duration, now, envelope);
         amp.connect(ctx.destination);
 
         sound.start(amp, resolve);

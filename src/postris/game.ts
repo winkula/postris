@@ -10,8 +10,7 @@ enum KeyCode {
     Right = 39,
     Down = 40,
     Y = 89,
-    X = 88,
-    R = 82
+    X = 88
 }
 
 interface ActionMap {
@@ -37,7 +36,7 @@ export class Game {
         this.state = new State(startLevel);
         this.speed = calculateSpeed(startLevel);
         this.gfx = new Gfx(this.state.matrix.dimensions);
-        this.sfx = new Sfx();
+        this.sfx = new Sfx(startLevel);
         this.actions = {
             [KeyCode.Left]: <ActionDefinition>{
                 action: () => this.state.move(Direction.Left),
@@ -63,11 +62,7 @@ export class Game {
             [KeyCode.Y]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.CounterClockwise),
                 sfx: () => this.sfx.rotate()
-            },
-            [KeyCode.R]: <ActionDefinition>{
-                action: () => { var r = new ActionResult(); r.success = true; return r; },
-                sfx: () => this.sfx.gameOver()
-            },
+            }
         }
     }
 
@@ -89,9 +84,11 @@ export class Game {
         if (!this.running || this.executing || this.state.isGameOver) {
             return;
         }
+
         this.executing = true;
 
         const result = action.action();
+
         if (result.gameOver) {
             this.running = false;
             this.sfx.stopMusic();
@@ -109,6 +106,7 @@ export class Game {
                     this.sfx.scored(result.lines?.length);
                     await this.gfx.animateClear(result.lines);
                     this.speed = calculateSpeed(this.state.level);
+                    this.sfx.level = this.state.level;
                 }
             }
 

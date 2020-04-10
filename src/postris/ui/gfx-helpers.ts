@@ -54,10 +54,9 @@ export function createBlockGeometry() {
         .translate(bevel, bevel, bevel);
 }
 
-function createMaterial(color: string, opacity: number = 1, texture?: THREE.Texture) {
+function createMaterial(color: string, opacity: number = 1) {
     const material = new THREE.MeshStandardMaterial({
         color: color,
-        map: texture,
         transparent: opacity < 1,
         opacity: opacity,
         roughness: 0.5,

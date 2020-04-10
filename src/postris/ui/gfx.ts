@@ -137,7 +137,7 @@ export class Gfx {
 
     renderPiece(piece?: Piece, shadow?: Piece) {
         this.renderPieceOnly(piece);
-        this.renderShadowOnly(piece);
+        this.renderShadowOnly(shadow);
     }
 
     private renderPieceOnly(piece?: Piece) {
