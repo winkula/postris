@@ -1,34 +1,30 @@
 import { Game } from "./game";
-import { containsAll } from "./helpers";
+
+const containsAll = (source: any[], target: any[]) => target.filter(x => source.includes(x)).length === target.length;
+const toKeyCodes = (str: string) => str.split("").map(x => x.charCodeAt(0));
 
 let started = false;
-const keys: number[] = [];
-const target = [73, 74, 76, 79, 83, 84, 90];
+let keys: number[] = [];
+const target = toKeyCodes("ijlostz");
 
 function play() {
     if (started) {
         return;
     }
     started = true;
-    const startLevel = 1;
-    const game = new Game(startLevel);
-    game.start();
+    new Game().start();
 }
 
-document.onkeypress = (event) => {
-    if (started) {
-        return;
+document.addEventListener("keypress", (event) => {
+    try {
+        if (!started && event.keyCode === 13 && containsAll(keys, target)) {
+            started = true;
+            new Game().start();
+        }
+        keys = [event.keyCode].concat(keys.slice(0, 6));
+    } catch (error) {
+        console.log(error);
     }
-    keys.push(event.keyCode);
-    if (keys.length > target.length) {
-        keys.shift();
-    }
-    console.log(keys);
-    if (containsAll(keys, target)) {
-        play();
-    }
-}
+});
 
-document.onclick = () => {
-    play();
-}
+document.addEventListener("click", play);

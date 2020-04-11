@@ -1,7 +1,8 @@
 import { Piece, TetriminoType } from "./piece";
-import { Vec, range } from "../helpers";
+import { Vec, range, cartesian } from "../helpers";
 
 const freeCell = undefined;
+const buildLine = (width: number) => range(width).map(() => freeCell);
 
 export class Block {
     position!: Vec;
@@ -9,16 +10,16 @@ export class Block {
 }
 
 export class Matrix {
-    readonly width: number;
-    readonly height: number;
-    readonly origin: Vec;
+    private readonly width: number;
+    private readonly height: number;
     private cells: (TetriminoType | undefined)[][];
+    readonly origin: Vec;
 
     constructor(width: number, height: number) {
         this.width = width;
         this.height = height;
+        this.cells = range(height).map(_ => buildLine(width));
         this.origin = new Vec(Math.round(width / 2 - 1), height - 1);
-        this.cells = range(height).map(() => range(width).map(() => freeCell));
     }
 
     get dimensions() {
@@ -26,20 +27,12 @@ export class Matrix {
     }
 
     get blocks() {
-        const blocks: Block[] = [];
-        for (const x of range(this.width)) {
-            for (const y of range(this.height)) {
-                const vec = new Vec(x, y);
-                const cellValue = this.get(vec);
-                if (cellValue !== freeCell) {
-                    blocks.push(<Block>{
-                        position: vec,
-                        type: cellValue
-                    });
-                }
-            }
-        }
-        return blocks;
+        return [...cartesian(this.width, this.height)]
+            .map(vec => <Block>{
+                position: vec,
+                type: this.get(vec)
+            })
+            .filter(block => block.type !== freeCell);
     }
 
     get(block: Vec) {
@@ -91,11 +84,10 @@ export class Matrix {
     }
 
     clearLines() {
-        const isFull = (row: Array<TetriminoType | undefined>) => row.filter(cell => cell === freeCell).length === 0;
-        const fullLines = range(this.height).filter(i => isFull(this.cells[i]));
-        this.cells = this.cells.filter(row => !isFull(row));
-        const cleared = this.height - this.cells.length;
-        range(cleared).forEach(i => this.cells.push(range(this.width).map(() => freeCell)));
-        return fullLines;
+        const isRowFull = (row: Array<TetriminoType | undefined>) => row.filter(cell => cell === freeCell).length === 0;
+        const clearedLineNumbers = range(this.height).filter(i => isRowFull(this.cells[i]));
+        this.cells = this.cells.filter(row => !isRowFull(row));
+        range(this.height - this.cells.length).forEach(_ => this.cells.push(buildLine(this.width)));
+        return clearedLineNumbers;
     }
 }

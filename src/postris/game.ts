@@ -72,12 +72,12 @@ export class Game {
 
     async start() {
         await this.gfx.init();
-        window.onkeydown = async (event: KeyboardEvent) => {
+        window.addEventListener("keydown", async (event: KeyboardEvent) => {
             const action = this.actions[event.keyCode];
             if (action) {
                 await this.execute(action);
             }
-        }
+        });
         this.sfx.startMusic();
         this.renderState();
         this.render();
@@ -129,7 +129,7 @@ export class Game {
     private async loop() {
         while (this.running) {
             await this.execute(<ActionDefinition>{
-                action: () => this.state.elapsed(),
+                action: () => this.state.elapsed()
             });
             await wait(this.speed);
         }
@@ -140,7 +140,9 @@ export class Game {
         let last: number | undefined;
 
         const callback = (timestamp: number) => {
-            if (!start) start = timestamp;
+            if (!start) {
+                start = timestamp;
+            }
             const delta = timestamp - (last ?? timestamp);
             this.state.time = Math.floor((timestamp - start) / 1000);
             this.gfx.render(delta);

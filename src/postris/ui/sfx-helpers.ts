@@ -1,7 +1,6 @@
-const AudioContext = window.AudioContext || (<any>window).webkitAudioContext;
-const ctx = new AudioContext();
-const noiseBuffer = createNoiseBuffer(1, 90);
+const ctx: AudioContext = createAudioContext()!;
 const playing: PlayingMap = {};
+let noiseBuffer: AudioBuffer | undefined;
 
 interface PlayingMap {
     [key: string]: Playable | undefined;
@@ -20,8 +19,9 @@ interface Note {
     velocity?: number;
 }
 
-interface PulseOscillatorNode extends OscillatorNode {
-    width: AudioParam;
+interface TrackNodes {
+    source: OscillatorNode;
+    amp: GainNode;
 }
 
 export class Envelope {
@@ -35,6 +35,17 @@ export class Envelope {
         this.decay = decay;
         this.sustain = sustain;
         this.release = release;
+    }
+}
+
+function createAudioContext() {
+    try {
+        const AudioContext = window.AudioContext || (<any>window).webkitAudioContext;
+        const ctx = new AudioContext();
+        return ctx;
+    } catch (error) {
+        console.warn("AudioContext is not supported in this browser.")
+        return undefined;
     }
 }
 
@@ -55,13 +66,13 @@ function createNoiseBuffer(length: number, repeat: number) {
     }
     const normalize = (x: number) => x * 2 - 1;
     const bitcrush = (value: number, steps: number) => Math.floor(value * steps) / steps;
-    return createAudioBuffer(length, i =>
+    noiseBuffer = createAudioBuffer(length, i =>
         normalize(bitcrush(random(Math.floor(i / repeat)), 256))
     );
+    return noiseBuffer;
 }
 
 function applyEnvelope(param: AudioParam, volume: number, duration: number, now: number, envelope: Envelope) {
-    //param.cancelScheduledValues(now);
     param.setValueAtTime(0, now);
     param.linearRampToValueAtTime(volume, now + envelope.attack);
     param.linearRampToValueAtTime(volume * envelope.sustain, now + envelope.attack + envelope.decay);
@@ -78,7 +89,7 @@ function modulate(target: AudioParam, duration: number, resolution: number, now:
 
 export function noise(duration: number) {
     const noise = ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
+    noise.buffer = createNoiseBuffer(1, 90);;
 
     return <Playable>{
         duration: duration,
@@ -146,11 +157,6 @@ export function gameOver(duration: number) {
     }
 }
 
-interface TrackNodes {
-    source: OscillatorNode;
-    amp: GainNode;
-}
-
 export function melody(tracks: Note[][], type: OscillatorType, speed: number = 1) {
     const now = ctx.currentTime;
 
@@ -169,7 +175,7 @@ export function melody(tracks: Note[][], type: OscillatorType, speed: number = 1
             const freq = 440 * Math.pow(2, (note.midi - 69) / 12);
             length = Math.max(duration, time + duration);
             source.frequency.setValueAtTime(freq, now + time);
-            
+
             amp.gain.setValueAtTime(0, now + time);
             amp.gain.linearRampToValueAtTime(note.velocity ?? 1, now + time + Math.min(0.01, duration * 0.9));
             amp.gain.linearRampToValueAtTime(0, now + time + duration * 0.9);
@@ -220,4 +226,8 @@ export async function play(key: string, sound: Playable, volume: number = 1, env
 
 export function stop(key: string) {
     playing[key]?.stop();
+}
+
+export function isAvailable() {
+    return ctx !== undefined;
 }

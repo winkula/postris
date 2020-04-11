@@ -84,7 +84,6 @@ export class State {
 
     private check() {
         if (this.isLanded) {
-            const before = this.piece;
             this.matrix.place(this.piece);
             this.canHold = true;
             const lines = this.matrix.clearLines();

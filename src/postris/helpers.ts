@@ -8,15 +8,18 @@ export class Vec {
     }
 
     add = (vec: Vec) => new Vec(this.x + vec.x, this.y + vec.y);
-    toString = () => `x=${this.x}, y=${this.y}`;
 }
-
-export const range = (x: number) => [...Array<number>(x).keys()];
 
 export const choice = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 
-export const shuffle = (arr: any[]) => arr.sort(() => Math.random() - 0.5);
-
 export const wait = (time: number) => new Promise<void>(res => setTimeout(res, time));
 
-export const containsAll = (source: any[], target: any[]) => target.filter(x => source.includes(x)).length === target.length;
+export const range = (n: number) => [...Array<number>(n).keys()];
+
+export function* cartesian(width: number, height: number) {
+    for (const x of range(width)) {
+        for (const y of range(height)) {
+            yield new Vec(x, y);
+        }
+    }
+}
