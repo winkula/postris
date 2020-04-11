@@ -17,7 +17,7 @@ export class Matrix {
     constructor(width: number, height: number) {
         this.width = width;
         this.height = height;
-        this.origin = new Vec(Math.round(width / 2 - 1), height);
+        this.origin = new Vec(Math.round(width / 2 - 1), height - 1);
         this.cells = range(height).map(() => range(width).map(() => freeCell));
     }
 

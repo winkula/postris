@@ -8,8 +8,6 @@ const font = new THREE.Font(fontData);
 const fontMaterial = new THREE.LineBasicMaterial({ color: "black", side: THREE.DoubleSide });
 const wallMaterial = new THREE.MeshStandardMaterial({ color: "white" });
 
-export const blockGeometry = createBlockGeometry();
-
 export async function getTexture(imageUrl: string): Promise<THREE.Texture> {
     return new Promise(resolve => {
         const image = new Image();
@@ -29,31 +27,6 @@ export function createFont(message: string, size: number) {
     return new THREE.Mesh(geometry, fontMaterial);
 }
 
-export function createBlockGeometry() {
-    const size = 1;
-    const bevel = 0.15;
-    const shapeSize = size - 2 * bevel;
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.lineTo(0, shapeSize);
-    shape.lineTo(shapeSize, shapeSize);
-    shape.lineTo(shapeSize, 0);
-    shape.lineTo(0, 0);
-
-    const extrudeSettings = {
-        steps: 1,
-        depth: size - 2 * bevel,
-        bevelEnabled: true,
-        bevelThickness: bevel,
-        bevelSize: bevel,
-        bevelOffset: 0,
-        bevelSegments: 1
-    };
-
-    return new THREE.ExtrudeGeometry(shape, extrudeSettings)
-        .translate(bevel, bevel, bevel);
-}
-
 function createMaterial(color: string, opacity: number = 1) {
     const material = new THREE.MeshStandardMaterial({
         color: color,
@@ -65,9 +38,9 @@ function createMaterial(color: string, opacity: number = 1) {
     return material;
 }
 
-function createParcelMaterial(color: string, opacity: number = 1, texture?: THREE.Texture) {
+function createParcelMaterial(opacity: number = 1, texture?: THREE.Texture) {
     const material = new THREE.MeshStandardMaterial({
-        color: color,
+        color: 0xFFFFFF,
         map: texture,
         transparent: opacity < 1,
         opacity: opacity,
@@ -97,9 +70,11 @@ export function createWalls(dimensions: Vec) {
     const walls = new THREE.Group();
     const width = dimensions.x;
     const depth = 3;
-    const wallWidth = 100;
+    const wallWidth = 1;
+    const wallWidthBottom = 100;
     const wallHeight = 100;
 
+    
     const left = createCube(-wallWidth, 0, 0, wallWidth, wallHeight, depth, boxGeometry, wallMaterial);
     left.receiveShadow = true;
     walls.add(left);
@@ -108,13 +83,13 @@ export function createWalls(dimensions: Vec) {
     right.receiveShadow = true;
     walls.add(right);
 
-    /*
-    const back = createCube(0, 0, -1, width, wallHeight, 1, boxGeometry, wallMaterial);
+    
+    const back = createCube(0, 0, 0, width, wallHeight, 1, boxGeometry, wallMaterial);
     back.receiveShadow = true;
     walls.add(back);
-    */
+    
 
-    const bottom = createCube(-wallWidth, -wallWidth, 0, wallWidth * 2 + width, wallWidth, depth, boxGeometry, wallMaterial);
+    const bottom = createCube(-wallWidthBottom, -wallWidthBottom, 0, wallWidthBottom * 2 + width, wallWidthBottom, depth, boxGeometry, wallMaterial);
     bottom.receiveShadow = true;
     walls.add(bottom);
 
@@ -122,7 +97,7 @@ export function createWalls(dimensions: Vec) {
 }
 
 export function createTopLight(dimensions: Vec) {
-    const light = new THREE.DirectionalLight(0xffffff, 0.4);
+    const light = new THREE.DirectionalLight(0xffffff, 0.25);
     light.position.set(0, dimensions.y + 5, 0);
     light.castShadow = true;
     light.shadow.camera.left = -dimensions.x / 2;
@@ -134,15 +109,13 @@ export function createTopLight(dimensions: Vec) {
 }
 
 export function createFrontLight(dimensions: Vec) {
-    const light = new THREE.DirectionalLight(0xffffff, 0.25);
+    const light = new THREE.DirectionalLight(0xffffff, 0.35);
     light.position.set(0, -dimensions.y * 0.1, 10);
     return light;
 }
 
 export function createBlock(position: Vec, texture: THREE.Texture, opacity: number = 1) {
-    //const material = createMaterial(color, opacity);
-    //const block = createCube(position.x, position.y, 1, 1, 1, 1, blockGeometry, material);
-    const material = createParcelMaterial("white", opacity, texture);
+    const material = createParcelMaterial(opacity, texture);
     const block = createCube(position.x, position.y, 1, 1, 1, 1, boxGeometry, material);
     block.name = `${position.x}.${position.y}`;
     block.castShadow = true;

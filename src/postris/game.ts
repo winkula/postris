@@ -10,7 +10,8 @@ enum KeyCode {
     Right = 39,
     Down = 40,
     Y = 89,
-    X = 88
+    X = 88,
+    C = 67,
 }
 
 interface ActionMap {
@@ -62,6 +63,9 @@ export class Game {
             [KeyCode.Y]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.CounterClockwise),
                 sfx: () => this.sfx.rotate()
+            },
+            [KeyCode.C]: <ActionDefinition>{
+                action: () => this.state.hold()
             }
         }
     }
@@ -75,7 +79,7 @@ export class Game {
             }
         }
         this.sfx.startMusic();
-        this.gfx.renderPreview(this.state.preview);
+        this.renderState();
         this.render();
         this.loop();
     }
@@ -89,37 +93,37 @@ export class Game {
 
         const result = action.action();
 
-        if (result.gameOver) {
+        if (this.state.isGameOver) {
             this.running = false;
             this.sfx.stopMusic();
             this.sfx.gameOver();
-            this.gfx.renderPiece(this.state.piece, undefined);
+            this.renderState(true);
+            await this.gfx.animateGameOver(this.state.matrix);
         }
         else if (result.success) {
             action.sfx?.(result);
-
             this.gfx.renderPiece(result.after, undefined);
+            this.gfx.renderPreview(this.state.preview);
             await action.gfx?.(result);
-
             if (result.locked) {
                 if (result.lines?.length > 0) {
-                    this.sfx.scored(result.lines?.length);
+                    this.sfx.scored(result.lines?.length, this.state.level);
                     await this.gfx.animateClear(result.lines);
                     this.speed = calculateSpeed(this.state.level);
-                    this.sfx.level = this.state.level;
                 }
             }
-
-            this.gfx.renderPiece(this.state.piece, this.state.shadow);
-            this.gfx.renderText(this.state);
-        }
-
-        if (result.locked) {
-            this.gfx.renderMatrix(this.state.matrix);
-            this.gfx.renderPreview(this.state.preview);
+            this.renderState();
         }
 
         this.executing = false;
+    }
+
+    private renderState(noShadow = false) {
+        this.gfx.renderPiece(this.state.piece, noShadow ? undefined : this.state.shadow);
+        this.gfx.renderMatrix(this.state.matrix);
+        this.gfx.renderPreview(this.state.preview);
+        this.gfx.renderHold(this.state.holded);
+        this.gfx.renderText(this.state);
     }
 
     private async loop() {
@@ -132,15 +136,18 @@ export class Game {
     }
 
     private render() {
-        let last: number | undefined = undefined;
-        const callback = (time: number) => {
-            if (last) {
-                this.state.time = Math.floor(time / 1000);
-                this.gfx.render(time - last);
-            }
-            last = time;
+        let start: number | undefined;
+        let last: number | undefined;
+
+        const callback = (timestamp: number) => {
+            if (!start) start = timestamp;
+            const delta = timestamp - (last ?? timestamp);
+            this.state.time = Math.floor((timestamp - start) / 1000);
+            this.gfx.render(delta);
+            last = timestamp;
             window.requestAnimationFrame(callback);
         };
-        callback(0);
+
+        window.requestAnimationFrame(callback);
     }
 }

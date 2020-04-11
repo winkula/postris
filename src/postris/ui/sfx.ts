@@ -1,9 +1,10 @@
 import { play, stop, noise, score, Envelope, wave, melody } from "./sfx-helpers";
 import * as song from "../assets/song.json";
+import { wait } from "../helpers";
 
 export class Sfx {
-    playing = false;
-    level: number;
+    private playing = false;
+    private level: number;
 
     constructor(level: number) {
         this.level = level;
@@ -12,7 +13,7 @@ export class Sfx {
     async startMusic() {
         this.playing = true;
         while (this.playing) {
-            const speed = Math.sqrt(this.level);
+            const speed = Math.sqrt(0.4 + 0.6 * this.level);
             await play("music", melody([song.bass, song.lead], "square", speed), 0.2);
         }
     }
@@ -34,11 +35,13 @@ export class Sfx {
         play("action", wave(440 * 3 / 2, 0.1), 1, new Envelope(0, 0, 1, 0.1));
     }
 
-    scored(lineCount: number) {
+    scored(lineCount: number, level: number) {
+        this.level = level;
         play("scored", score(0.6, lineCount), 1, new Envelope(0, 0.1, 0.8, 0.2));
     }
 
-    gameOver() {
+    async gameOver() {
+        await wait(150);
         const notes = [
             { time: 0, duration: 2, midi: 64, velocity: 0.5 },
             { time: 3, duration: 2, midi: 63, velocity: 0.7 },

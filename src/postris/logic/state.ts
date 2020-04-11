@@ -1,5 +1,5 @@
 import { Matrix } from "./matrix";
-import { tetriminos, Piece, Tetrimino } from "./piece";
+import { tetriminos, Piece, Tetrimino, TetriminoType } from "./piece";
 import { choice } from "../helpers";
 import { calculateScore, calculateLevel } from "./helpers";
 
@@ -16,7 +16,6 @@ export enum Rotation {
 export class ActionResult {
     success: boolean = false;
     locked: boolean = false;
-    gameOver: boolean = false;
     lines: number[] = [];
     before?: Piece;
     after?: Piece;
@@ -26,11 +25,14 @@ export class State {
     matrix: Matrix;
     piece!: Piece;
     preview!: Tetrimino;
+    holded?: Tetrimino;
+    canHold = true;
     startLevel: number;
     level: number;
-    lines: number = 0;
-    score: number = 0;
-    time: number = 0;
+    lines = 0;
+    score = 0;
+    time = 0;
+    count = 0;
 
     constructor(startLevel: number) {
         if (startLevel <= 0) {
@@ -84,18 +86,16 @@ export class State {
         if (this.isLanded) {
             const before = this.piece;
             this.matrix.place(this.piece);
+            this.canHold = true;
             const lines = this.matrix.clearLines();
             this.lines += lines.length;
             this.score += calculateScore(this.level, lines.length);
             this.level = calculateLevel(this.startLevel, this.lines);
+            this.count++;
             this.spawn();
             return <ActionResult>{
                 success: true,
                 locked: true,
-                before: before,
-                after: this.piece,
-                gameOver: this.isGameOver,
-                lineCount: lines.length,
                 lines: lines
             };
         }
@@ -132,5 +132,22 @@ export class State {
             this.check(),
             this.apply(this.piece.fall())
         );
+    }
+
+    hold() {
+        if (!this.canHold) {
+            return <ActionResult>{};
+        }
+        const holdedBefore = this.holded;
+        this.holded = this.piece?.tetrimino;
+        this.canHold = false;
+        if (holdedBefore) {
+            this.piece = new Piece(holdedBefore, this.matrix.origin);
+        } else {
+            this.spawn();
+        }
+        return <ActionResult>{
+            success: true,
+        };
     }
 }

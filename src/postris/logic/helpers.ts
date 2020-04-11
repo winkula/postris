@@ -7,5 +7,6 @@ export function calculateSpeed(level: number) {
 }
 
 export function calculateLevel(startLevel: number, lines: number) {
-    return startLevel + Math.floor(lines / 10);
+    const level = startLevel + Math.floor(lines / 10);
+    return Math.min(level, 15);
 }
