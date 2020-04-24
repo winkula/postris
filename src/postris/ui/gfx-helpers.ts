@@ -70,21 +70,18 @@ export function createWalls(dimensions: Vec) {
     const walls = new THREE.Group();
     const width = dimensions.x;
     const depth = 3;
-    const wallWidth = 1;
+    const wallWidth = 100;
     const wallWidthBottom = 100;
     const wallHeight = 100;
-    
+
     const left = createCube(-wallWidth, 0, 0, wallWidth, wallHeight, depth, boxGeometry, wallMaterial);
-    //left.receiveShadow = true;
     walls.add(left);
 
     const right = createCube(width, 0, 0, wallWidth, wallHeight, depth, boxGeometry, wallMaterial);
-    //right.receiveShadow = true;
     walls.add(right);
-    
+
     const back = createCube(0, 0, 0, width, wallHeight, 1, boxGeometry, wallMaterial);
-    //back.receiveShadow = true;
-    walls.add(back);    
+    walls.add(back);
 
     const bottom = createCube(-wallWidthBottom, -wallWidthBottom, 0, wallWidthBottom * 2 + width, wallWidthBottom, depth, boxGeometry, wallMaterial);
     bottom.receiveShadow = true;

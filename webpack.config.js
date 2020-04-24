@@ -1,19 +1,23 @@
 const path = require('path');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: path.join(__dirname, '/src/postris/index.ts'),
     module: {
         rules: [
             {
-                test: /\.tsx?$/,
-                loader: 'ts-loader',
+                test: /\.ts$/,
+                use: ['babel-loader', 'ts-loader']
+            },
+            {
+                test: /\.png$/,
+                use: ['file-loader'],
                 exclude: /node_modules/,
             },
         ]
     },
     resolve: {
-        extensions: [".tsx", ".ts", ".js"]
+        extensions: [".ts", ".js"]
     },
     plugins: [new HtmlWebpackPlugin({
         template: 'public/index.html'
