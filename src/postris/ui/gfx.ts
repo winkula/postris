@@ -1,5 +1,18 @@
 import { Vec, wait, range, choice } from "../helpers";
-import * as THREE from "three";
+import {
+    Scene,
+    Object3D,
+    AnimationMixer,
+    Vector3,
+    AmbientLight,
+    WebGLRenderer,
+    PerspectiveCamera,
+    PCFSoftShadowMap,
+    LoopOnce,
+    Texture,
+    Group,
+    DirectionalLight
+} from "three";
 import { Piece, Tetrimino, TetriminoType } from "../logic/piece";
 import { State } from "../logic/state";
 import { createWalls, createFont, createTopLight, createFrontLight, createBlock, getTexture, createTweenAnimation, createTrail } from "./gfx-helpers";
@@ -14,26 +27,26 @@ import letters from "../assets/textures/letters.png";
 import zalando from "../assets/textures/zalando.png";
 
 export class Gfx {
-    private scene: THREE.Scene;
-    private infos: THREE.Object3D;
-    private walls: THREE.Object3D;
-    private matrix: THREE.Object3D;
-    private gameOver: THREE.Object3D;
-    private piece: THREE.Object3D;
-    private shadow: THREE.Object3D;
-    private preview: THREE.Object3D;
-    private hold: THREE.Object3D;
+    private scene: Scene;
+    private infos: Object3D;
+    private walls: Object3D;
+    private matrix: Object3D;
+    private gameOver: Object3D;
+    private piece: Object3D;
+    private shadow: Object3D;
+    private preview: Object3D;
+    private hold: Object3D;
 
-    private mixer: THREE.AnimationMixer;
+    private mixer: AnimationMixer;
 
-    private readonly camera: THREE.PerspectiveCamera;
-    private readonly renderer: THREE.WebGLRenderer;
+    private readonly camera: PerspectiveCamera;
+    private readonly renderer: WebGLRenderer;
 
-    private readonly ambientLight: THREE.AmbientLight;
-    private readonly directionalLightTop: THREE.DirectionalLight;
-    private readonly directionalLightFront: THREE.DirectionalLight;
+    private readonly ambientLight: AmbientLight;
+    private readonly directionalLightTop: DirectionalLight;
+    private readonly directionalLightFront: DirectionalLight;
 
-    private textures: THREE.Texture[] = [];
+    private textures: Texture[] = [];
 
     private dimensions: Vec;
 
@@ -43,20 +56,20 @@ export class Gfx {
         const pieceHudPos = new Vec(3, 10);
         const pieceHudZ = 2;
 
-        this.scene = new THREE.Scene();
-        this.infos = new THREE.Group();
+        this.scene = new Scene();
+        this.infos = new Group();
         this.infos.position.z += 0.5;
         this.walls = this.moveToCenter(createWalls(dimensions));
-        this.matrix = this.moveToCenter(new THREE.Group());
-        this.gameOver = this.moveToCenter(new THREE.Group());
-        this.piece = this.moveToCenter(new THREE.Group());
-        this.shadow = this.moveToCenter(new THREE.Group());
-        this.preview = this.moveToCenter(new THREE.Group());
-        this.preview.position.add(new THREE.Vector3(this.dimensions.x + pieceHudPos.x, pieceHudPos.y, pieceHudZ));
-        this.hold = this.moveToCenter(new THREE.Group());
-        this.hold.position.add(new THREE.Vector3(-2 - pieceHudPos.x, pieceHudPos.y, pieceHudZ));
+        this.matrix = this.moveToCenter(new Group());
+        this.gameOver = this.moveToCenter(new Group());
+        this.piece = this.moveToCenter(new Group());
+        this.shadow = this.moveToCenter(new Group());
+        this.preview = this.moveToCenter(new Group());
+        this.preview.position.add(new Vector3(this.dimensions.x + pieceHudPos.x, pieceHudPos.y, pieceHudZ));
+        this.hold = this.moveToCenter(new Group());
+        this.hold.position.add(new Vector3(-2 - pieceHudPos.x, pieceHudPos.y, pieceHudZ));
 
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        this.ambientLight = new AmbientLight(0xffffff, 0.6);
         this.directionalLightTop = createTopLight(dimensions);
         this.directionalLightFront = createFrontLight(dimensions);
 
@@ -73,12 +86,12 @@ export class Gfx {
             .add(this.directionalLightTop)
             .add(this.directionalLightFront);
 
-        this.camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 50);
+        this.camera = new PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 50);
 
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        this.renderer = new WebGLRenderer({ antialias: true });
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.setClearColor(0xFFFFFF, 0.8);
+        this.renderer.shadowMap.type = PCFSoftShadowMap;
+        this.renderer.setClearColor(0xFFFFFF);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
 
         window.addEventListener("resize", () => {
@@ -88,7 +101,7 @@ export class Gfx {
         });
 
         this.updateDom();
-        this.mixer = new THREE.AnimationMixer(this.camera);
+        this.mixer = new AnimationMixer(this.camera);
     }
 
     async init() {
@@ -116,7 +129,7 @@ export class Gfx {
         document.body.appendChild(canvas);
     }
 
-    private moveToCenter(object: THREE.Object3D) {
+    private moveToCenter(object: Object3D) {
         object.position.x -= this.dimensions.x / 2;
         object.position.z -= 1;
         return object;
@@ -153,7 +166,7 @@ export class Gfx {
         if (!piece) return;
         const texture = this.textures[piece.tetrimino.type];
         piece.blocks.forEach(block =>
-            this.shadow.add(createBlock(block, texture, 0.3))
+            this.shadow.add(createBlock(block, texture, 0.4))
         );
     }
 
@@ -231,14 +244,14 @@ export class Gfx {
 
         const before = this.camera.clone();
         before.position.set(0, base * 1.0, base * 0.6);
-        before.lookAt(new THREE.Vector3(0, base * 0.6, -30));
+        before.lookAt(new Vector3(0, base * 0.6, -30));
 
         const after = this.camera.clone();
         after.position.set(0, base * 0.3, base * 0.8);
-        after.lookAt(new THREE.Vector3(0, base * 0.45, 0));
+        after.lookAt(new Vector3(0, base * 0.45, 0));
 
         const animation = this.mixer.clipAction(createTweenAnimation("camera", 5, before, after));
-        animation.setLoop(THREE.LoopOnce, 1);
+        animation.setLoop(LoopOnce, 1);
         animation.clampWhenFinished = true;
         animation.play();
     }

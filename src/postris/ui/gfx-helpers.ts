@@ -1,18 +1,39 @@
-import * as THREE from "three";
+import {
+    BoxGeometry,
+    Font,
+    Mesh,
+    LineBasicMaterial,
+    MeshStandardMaterial,
+    DoubleSide,
+    FrontSide,
+    Texture,
+    ShapeBufferGeometry,
+    Group,
+    DirectionalLight,
+    AnimationClip,
+    VectorKeyframeTrack,
+    QuaternionKeyframeTrack,
+    InterpolateSmooth,
+    Geometry,
+    Material,
+    Vector3,
+    Quaternion,
+    Object3D
+} from "three";
 import * as fontData from "../assets/font.json";
 import { Vec } from "../helpers.js";
 import { Piece } from "../logic/piece.js";
 
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1).translate(0.5, 0.5, 0.5);
-const font = new THREE.Font(fontData);
-const fontMaterial = new THREE.LineBasicMaterial({ color: "black", side: THREE.DoubleSide });
-const wallMaterial = new THREE.MeshStandardMaterial({ color: "white" });
+const boxGeometry = new BoxGeometry(1, 1, 1).translate(0.5, 0.5, 0.5);
+const font = new Font(fontData);
+const fontMaterial = new LineBasicMaterial({ color: "black", side: DoubleSide });
+const wallMaterial = new MeshStandardMaterial({ color: "white" });
 
-export async function getTexture(imageUrl: string): Promise<THREE.Texture> {
+export async function getTexture(imageUrl: string): Promise<Texture> {
     return new Promise(resolve => {
         const image = new Image();
         image.crossOrigin = "";
-        const texture = new THREE.Texture(image);
+        const texture = new Texture(image);
         image.onload = () => {
             texture.needsUpdate = true;
             resolve(texture);
@@ -23,12 +44,12 @@ export async function getTexture(imageUrl: string): Promise<THREE.Texture> {
 
 export function createFont(message: string, size: number) {
     const shapes = font.generateShapes(message.toLowerCase(), size);
-    const geometry = new THREE.ShapeBufferGeometry(shapes);
-    return new THREE.Mesh(geometry, fontMaterial);
+    const geometry = new ShapeBufferGeometry(shapes);
+    return new Mesh(geometry, fontMaterial);
 }
 
 function createMaterial(color: string, opacity: number = 1) {
-    const material = new THREE.MeshStandardMaterial({
+    const material = new MeshStandardMaterial({
         color: color,
         transparent: opacity < 1,
         opacity: opacity,
@@ -38,13 +59,13 @@ function createMaterial(color: string, opacity: number = 1) {
     return material;
 }
 
-function createParcelMaterial(opacity: number = 1, texture?: THREE.Texture) {
-    const material = new THREE.MeshStandardMaterial({
+function createParcelMaterial(opacity: number = 1, texture?: Texture) {
+    const material = new MeshStandardMaterial({
         color: 0xFFFFFF,
         map: texture,
         transparent: opacity < 1,
         opacity: opacity,
-        side: THREE.FrontSide
+        side: FrontSide
     });
     return material;
 }
@@ -59,15 +80,15 @@ export function createTrail(before: Piece, after: Piece) {
         boxGeometry, material);
 }
 
-export function createCube(x: number, y: number, z: number, w: number, h: number, d: number, geometry: THREE.Geometry, material: THREE.Material) {
-    const cube = new THREE.Mesh(geometry, material);
+export function createCube(x: number, y: number, z: number, w: number, h: number, d: number, geometry: Geometry, material: Material) {
+    const cube = new Mesh(geometry, material);
     cube.scale.set(w, h, d);
     cube.position.set(x, y, z);
     return cube;
 }
 
 export function createWalls(dimensions: Vec) {
-    const walls = new THREE.Group();
+    const walls = new Group();
     const width = dimensions.x;
     const depth = 3;
     const wallWidth = 100;
@@ -80,9 +101,6 @@ export function createWalls(dimensions: Vec) {
     const right = createCube(width, 0, 0, wallWidth, wallHeight, depth, boxGeometry, wallMaterial);
     walls.add(right);
 
-    const back = createCube(0, 0, 0, width, wallHeight, 1, boxGeometry, wallMaterial);
-    walls.add(back);
-
     const bottom = createCube(-wallWidthBottom, -wallWidthBottom, 0, wallWidthBottom * 2 + width, wallWidthBottom, depth, boxGeometry, wallMaterial);
     bottom.receiveShadow = true;
     walls.add(bottom);
@@ -91,7 +109,7 @@ export function createWalls(dimensions: Vec) {
 }
 
 export function createTopLight(dimensions: Vec) {
-    const light = new THREE.DirectionalLight(0xffffff, 0.25);
+    const light = new DirectionalLight(0xffffff, 0.25);
     light.position.set(0, dimensions.y + 5, 0);
     light.castShadow = true;
     light.shadow.camera.left = -dimensions.x / 2;
@@ -103,12 +121,12 @@ export function createTopLight(dimensions: Vec) {
 }
 
 export function createFrontLight(dimensions: Vec) {
-    const light = new THREE.DirectionalLight(0xffffff, 0.35);
+    const light = new DirectionalLight(0xffffff, 0.35);
     light.position.set(0, -dimensions.y * 0.1, 10);
     return light;
 }
 
-export function createBlock(position: Vec, texture: THREE.Texture, opacity: number = 1) {
+export function createBlock(position: Vec, texture: Texture, opacity: number = 1) {
     const material = createParcelMaterial(opacity, texture);
     const block = createCube(position.x, position.y, 1, 1, 1, 1, boxGeometry, material);
     block.name = `${position.x}.${position.y}`;
@@ -117,23 +135,23 @@ export function createBlock(position: Vec, texture: THREE.Texture, opacity: numb
     return block;
 }
 
-export function flattenVector(vector: THREE.Vector3) {
+export function flattenVector(vector: Vector3) {
     return [vector.x, vector.y, vector.z];
 }
 
-export function flattenQuaternion(quaternion: THREE.Quaternion) {
+export function flattenQuaternion(quaternion: Quaternion) {
     return [quaternion.x, quaternion.y, quaternion.z, quaternion.w];
 }
 
-export function createTweenAnimation(name: string, duration: number, before: THREE.Object3D, after: THREE.Object3D) {
-    return new THREE.AnimationClip(name, duration, [
-        new THREE.VectorKeyframeTrack(".position",
+export function createTweenAnimation(name: string, duration: number, before: Object3D, after: Object3D) {
+    return new AnimationClip(name, duration, [
+        new VectorKeyframeTrack(".position",
             [0, duration],
             [...flattenVector(before.position), ...flattenVector(after.position)],
-            THREE.InterpolateSmooth
+            InterpolateSmooth
         ),
 
-        new THREE.QuaternionKeyframeTrack(".quaternion",
+        new QuaternionKeyframeTrack(".quaternion",
             [0, duration],
             [...flattenQuaternion(before.quaternion), ...flattenQuaternion(after.quaternion)]
         ),
