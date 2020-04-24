@@ -2,6 +2,13 @@ import { play, stop, noise, score, Envelope, wave, melody, isAvailable } from ".
 import * as song from "../assets/song.json";
 import { wait } from "../helpers";
 
+const gameOverNotes = [
+    { time: 0, duration: 2, midi: 64, velocity: 0.5 },
+    { time: 3, duration: 2, midi: 63, velocity: 0.7 },
+    { time: 6, duration: 2, midi: 62, velocity: 0.9 },
+    { time: 9, duration: 6, midi: 61, velocity: 1.0 }
+];
+
 export class Sfx {
     private playing = false;
     private level: number;
@@ -40,7 +47,7 @@ export class Sfx {
         if (!isAvailable()) {
             return;
         }
-        play("action", noise(0.5), 0.8, new Envelope(0, 0, 1, 0.5));
+        play("action", noise(0.5), 0.8, new Envelope(0, 0, 1, 0.7));
     }
 
     rotate() {
@@ -63,12 +70,6 @@ export class Sfx {
             return;
         }
         await wait(150);
-        const notes = [
-            { time: 0, duration: 2, midi: 64, velocity: 0.5 },
-            { time: 3, duration: 2, midi: 63, velocity: 0.7 },
-            { time: 6, duration: 2, midi: 62, velocity: 0.9 },
-            { time: 9, duration: 6, midi: 61, velocity: 1.0 }
-        ];
-        play("gameover", melody([notes], "sawtooth", 6), 0.6);
+        play("gameover", melody([gameOverNotes], "sawtooth", 6.5), 0.6);
     }
 }
