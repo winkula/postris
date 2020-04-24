@@ -28,7 +28,7 @@ export class Game {
     state: State;
     actions: ActionMap;
     speed: number;
-    running = true;
+    running = false;
     executing = false;
     gfx: Gfx;
     sfx: Sfx;
@@ -70,17 +70,24 @@ export class Game {
         }
     }
 
-    async start() {
+    async load() {
         await this.gfx.init();
+        this.renderState();
+        this.render();
         window.addEventListener("keydown", async (event: KeyboardEvent) => {
+            if (!this.running && !this.state.isGameOver) {
+                await this.start();
+            }
             const action = this.actions[event.keyCode];
             if (action) {
                 await this.execute(action);
             }
         });
+    }
+
+    async start() {
+        this.running = true;
         this.sfx.startMusic();
-        this.renderState();
-        this.render();
         this.loop();
     }
 
