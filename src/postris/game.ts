@@ -3,16 +3,7 @@ import { State, Direction, Rotation, ActionResult } from "./logic/state";
 import { Sfx } from "./ui/sfx";
 import { wait } from "./helpers";
 import { calculateSpeed } from "./logic/helpers";
-
-enum KeyCode {
-    Left = 37,
-    Up = 38,
-    Right = 39,
-    Down = 40,
-    Y = 89,
-    X = 88,
-    C = 67,
-}
+import { Input, InputType } from "./ui/input";
 
 interface ActionMap {
     [key: number]: ActionDefinition | undefined;
@@ -32,39 +23,41 @@ export class Game {
     executing = false;
     gfx: Gfx;
     sfx: Sfx;
+    input: Input;
 
     constructor(startLevel: number = 1) {
         this.state = new State(startLevel);
         this.speed = calculateSpeed(startLevel);
         this.gfx = new Gfx(this.state.matrix.dimensions);
         this.sfx = new Sfx(startLevel);
+        this.input = new Input();
         this.actions = {
-            [KeyCode.Left]: <ActionDefinition>{
+            [InputType.MoveLeft]: <ActionDefinition>{
                 action: () => this.state.move(Direction.Left),
                 sfx: () => this.sfx.move()
             },
-            [KeyCode.Right]: <ActionDefinition>{
+            [InputType.MoveRight]: <ActionDefinition>{
                 action: () => this.state.move(Direction.Right),
                 sfx: () => this.sfx.move()
             },
-            [KeyCode.Down]: <ActionDefinition>{
+            [InputType.SoftDrop]: <ActionDefinition>{
                 action: () => this.state.fall(),
                 sfx: () => this.sfx.move()
             },
-            [KeyCode.Up]: <ActionDefinition>{
+            [InputType.HardDrop]: <ActionDefinition>{
                 action: () => this.state.drop(),
                 gfx: async (result) => await this.gfx.animateDrop(result.before!, result.after!),
                 sfx: () => this.sfx.drop(),
             },
-            [KeyCode.X]: <ActionDefinition>{
+            [InputType.RotateCcw]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.Clockwise),
                 sfx: () => this.sfx.rotate()
             },
-            [KeyCode.Y]: <ActionDefinition>{
+            [InputType.RotateCw]: <ActionDefinition>{
                 action: () => this.state.rotate(Rotation.CounterClockwise),
                 sfx: () => this.sfx.rotate()
             },
-            [KeyCode.C]: <ActionDefinition>{
+            [InputType.Hold]: <ActionDefinition>{
                 action: () => this.state.hold()
             }
         }
@@ -74,15 +67,15 @@ export class Game {
         await this.gfx.init();
         this.renderState();
         this.render();
-        window.addEventListener("keydown", async (event: KeyboardEvent) => {
+        this.input.handler = async (actionCode: InputType) => {
             if (!this.running && !this.state.isGameOver) {
                 await this.start();
             }
-            const action = this.actions[event.keyCode];
+            const action = this.actions[actionCode];
             if (action) {
                 await this.execute(action);
             }
-        });
+        }
     }
 
     async start() {

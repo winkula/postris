@@ -7,7 +7,8 @@ module.exports = {
         rules: [
             {
                 test: /\.ts$/,
-                use: ['babel-loader', 'ts-loader']
+                use: ['babel-loader', 'ts-loader'],
+                exclude: /node_modules/,
             },
             {
                 test: /\.png$/,

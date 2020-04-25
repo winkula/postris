@@ -125,6 +125,7 @@ export class Gfx {
         canvas.style.top = "0";
         canvas.style.left = "0";
         canvas.style.zIndex = "1000";
+        canvas.style.touchAction = "none";
         document.body.style.overflow = "hidden";
         document.body.appendChild(canvas);
     }

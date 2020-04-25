@@ -7,7 +7,16 @@ export class Vec {
         this.y = y;
     }
 
+    get angle() {
+        return Math.atan2(this.y, this.x);
+    }
+
+    get magnitude() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
     add = (vec: Vec) => new Vec(this.x + vec.x, this.y + vec.y);
+    sub = (vec: Vec) => new Vec(this.x - vec.x, this.y - vec.y);
 }
 
 export const choice = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
