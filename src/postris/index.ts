@@ -1,5 +1,4 @@
-import "regenerator-runtime";
 import { Game } from "./game";
 
-const game = new Game();
+const game = new Game(11);
 game.load();
