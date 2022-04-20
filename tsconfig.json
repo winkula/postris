@@ -2,10 +2,11 @@
   "compilerOptions": {
     "strict": true,
     "module": "commonjs",
-    "target": "es6",
+    "target": "ES2017",
     "sourceMap": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules"
@@ -13,5 +14,6 @@
   "typeRoots": [
     "./node_modules/@types",
     "./node_modules/three/src/Three.d.ts",
-  ]
+  ],
+  "types": ["webgl2", "offscreencanvas"]
 }

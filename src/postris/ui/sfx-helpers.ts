@@ -8,7 +8,7 @@ interface PlayingMap {
 
 interface Playable {
     duration: number;
-    start: (target: AudioNode, onended: () => void) => void;
+    start: (target: AudioNode, onended: (value: unknown) => void) => void;
     stop: () => void;
 }
 
