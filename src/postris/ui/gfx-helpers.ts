@@ -1,6 +1,5 @@
 import {
   BoxGeometry,
-  Font,
   Mesh,
   LineBasicMaterial,
   MeshStandardMaterial,
@@ -14,12 +13,13 @@ import {
   VectorKeyframeTrack,
   QuaternionKeyframeTrack,
   InterpolateSmooth,
-  Geometry,
+  BufferGeometry,
   Material,
   Vector3,
   Quaternion,
   Object3D,
 } from "three";
+import { Font } from "three/examples/jsm/loaders/FontLoader.js"
 import * as fontData from "../assets/font.json";
 import { Vec } from "../helpers.js";
 import { Piece } from "../logic/piece.js";
@@ -96,7 +96,7 @@ export function createCube(
   w: number,
   h: number,
   d: number,
-  geometry: Geometry,
+  geometry: BufferGeometry,
   material: Material
 ) {
   const cube = new Mesh(geometry, material);
