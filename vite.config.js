@@ -1,9 +1,9 @@
-import legacy from '@vitejs/plugin-legacy';
+import legacy from "@vitejs/plugin-legacy";
 
 export default {
   plugins: [
     legacy({
-      targets: ['defaults', 'not IE 11']
-    })
-  ]
+      targets: ["defaults", "not IE 11"],
+    }),
+  ],
 };
