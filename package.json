@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "author": "",
+  "author": "Mathias Winkler",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
