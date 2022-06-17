@@ -202,8 +202,8 @@ export class Gfx {
     this.infos.children = [];
 
     const size = 0.3;
-    const leftX = -12.5;
-    const rightX = this.dimensions.x - 3;
+    const leftX = -11.5;
+    const rightX = this.dimensions.x - 4;
 
     const createLine = (text: string, x: number, y: number) => {
       const mesh = createFont(text, size);
@@ -216,19 +216,20 @@ export class Gfx {
       .padStart(2, "0")}:${(state.time % 60).toString().padStart(2, "0")}`;
 
     createLine(`Postris`, leftX, 0);
+    createLine(`by Maethu`, leftX, 1);
     createLine(`Time:   ${timeStr}`, leftX, 2);
     createLine(`Level:  ${state.level}`, leftX, 3);
     createLine(`Score:  ${state.score}`, leftX, 4);
     createLine(`Lines:  ${state.lines}`, leftX, 5);
     createLine(`Pieces: ${state.count}`, leftX, 6);
 
-    createLine(`Left: move left`, rightX, 0);
-    createLine(`Right:move right`, rightX, 1);
-    createLine(`Down: soft drop`, rightX, 2);
-    createLine(`Up:   hard drop`, rightX, 3);
-    createLine(`Y:    rotate ccw`, rightX, 4);
-    createLine(`X:    rotate cw`, rightX, 5);
-    createLine(`C:    hold`, rightX, 6);
+    createLine(`Left:    move left`, rightX, 0);
+    createLine(`Right:   move right`, rightX, 1);
+    createLine(`Down:    soft drop`, rightX, 2);
+    createLine(`Space:   hard drop`, rightX, 3);
+    createLine(`Ctrl,Y,Z:rotate ccw`, rightX, 4);
+    createLine(`Up,X:    rotate cw`, rightX, 5);
+    createLine(`Shift,C: hold`, rightX, 6);
   }
 
   async animateClear(lines: number[]) {

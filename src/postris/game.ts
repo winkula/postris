@@ -51,11 +51,11 @@ export class Game {
         sfx: () => this.sfx.drop(),
       },
       [InputType.RotateCcw]: <ActionDefinition>{
-        action: () => this.state.rotate(Rotation.Clockwise),
+        action: () => this.state.rotate(Rotation.CounterClockwise),
         sfx: () => this.sfx.rotate(),
       },
       [InputType.RotateCw]: <ActionDefinition>{
-        action: () => this.state.rotate(Rotation.CounterClockwise),
+        action: () => this.state.rotate(Rotation.Clockwise),
         sfx: () => this.sfx.rotate(),
       },
       [InputType.Hold]: <ActionDefinition>{

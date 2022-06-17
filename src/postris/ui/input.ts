@@ -11,17 +11,21 @@ export enum InputType {
 }
 
 enum KeyCode {
-  Left = 37,
-  Up = 38,
-  Right = 39,
-  Down = 40,
-  Y = 89,
-  X = 88,
-  C = 67,
+  Left = "ArrowLeft",
+  Right = "ArrowRight",
+  Up = "ArrowUp",
+  Down = "ArrowDown",
+  C = "KeyC",
+  X = "KeyX",
+  Y = "KeyY",
+  Z = "KeyZ",
+  Space = "Space",
+  Control = "ControlLeft",
+  Shift = "ShiftLeft",
 }
 
 interface InputMap {
-  [key: number]: InputType | undefined;
+  [key: string]: InputType | undefined;
 }
 
 const getVec = (touch: Touch) => new Vec(touch.screenX, touch.screenY);
@@ -38,13 +42,18 @@ export class Input {
   private thresholdX = 0.4;
   private thresholdY = 0.4;
 
+  // https://tetris.fandom.com/wiki/Tetris_Guideline
   private inputMap: InputMap = {
     [KeyCode.Left]: InputType.MoveLeft,
     [KeyCode.Right]: InputType.MoveRight,
-    [KeyCode.Up]: InputType.HardDrop,
     [KeyCode.Down]: InputType.SoftDrop,
-    [KeyCode.Y]: InputType.RotateCw,
-    [KeyCode.X]: InputType.RotateCcw,
+    [KeyCode.Space]: InputType.HardDrop,
+    [KeyCode.Control]: InputType.RotateCcw,
+    [KeyCode.Y]: InputType.RotateCcw,
+    [KeyCode.Z]: InputType.RotateCcw,
+    [KeyCode.Up]: InputType.RotateCw,
+    [KeyCode.X]: InputType.RotateCw,
+    [KeyCode.Shift]: InputType.Hold,
     [KeyCode.C]: InputType.Hold,
   };
 
@@ -55,7 +64,7 @@ export class Input {
     });
 
     window.addEventListener("keydown", (event: KeyboardEvent) => {
-      const inputType = this.inputMap[event.keyCode];
+      const inputType = this.inputMap[event.code];
       if (inputType !== undefined) {
         this.handler?.(inputType);
       }
