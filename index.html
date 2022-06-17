@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>postris</title>
-    <style></style>
-  </head>
 
-  <body>
-    <script type="module" src="/src/postris/index.ts"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>postris</title>
+  <style type="text/css">
+    .logo {
+      position: absolute;
+      z-index: 1001;
+      max-width: 300px;
+      width: 25%;
+    }
+  </style>
+</head>
+
+<body>
+  <img class="logo" src="./src/postris/assets/images/logo.png" alt="Logo" />
+  <script type="module" src="/src/postris/index.ts"></script>
+</body>
+
 </html>
