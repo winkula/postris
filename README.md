@@ -1,5 +1,25 @@
-[![Postris Logo](https://raw.githubusercontent.com/winkula/postris/main/src/assets/images/logo.png)](https://postris.netlify.app)
+[![Postris Logo](https://github.com/winkula/postris/raw/main/src/assets/images/logo.png)](https://postris.netlify.app)
 
-![example workflow](https://github.com/winkula/postris/actions/workflows/ci.yml/badge.svg)
+![Build status](https://github.com/winkula/postris/actions/workflows/ci.yml/badge.svg)
 
-Play [postris](https://postris.netlify.app/).
+## Demo
+
+Play [postris](https://postris.netlify.app/) online!
+
+## Installation
+
+```
+npm install
+```
+
+## Build
+
+```
+npm run build
+```
+
+## Develop
+
+```
+npm run dev
+```
