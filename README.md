@@ -1,6 +1,6 @@
 [![Postris Logo](https://github.com/winkula/postris/raw/main/src/assets/images/logo.png)](https://postris.netlify.app)
 
-![Build status](https://github.com/winkula/postris/actions/workflows/ci.yml/badge.svg)
+[![Build status](https://github.com/winkula/postris/actions/workflows/ci.yml/badge.svg)](https://github.com/winkula/postris/actions)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c49e52d9-4d27-4370-953a-fc413c8e1dc6/deploy-status)](https://app.netlify.com/sites/postris/deploys)
 
 Postris is a Tetris clone, unofficially developed referring to the [Swiss Post](https://www.post.ch/) - hence the name *Post*ris.
