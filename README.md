@@ -31,6 +31,6 @@ npm run dev
 
 ## Tasks
 
-- [ ] Suppress double tap zoom on mobile
+- [X] Suppress double tap zoom on mobile
 - [ ] Add basic menu functionality (i.e. restart)
 - [ ] Make HUD infos mobile friendly
