@@ -2,20 +2,29 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: main
   pull_request:
-    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 16.15.1
-        uses: actions/setup-node@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: "16.15.1"
-      - name: npm install
-        run: npm install
-      - name: yarn build
-        run: yarn run build
+            version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+            cache: "pnpm"
+            node-version-file: ".node-version"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build

@@ -60,7 +60,12 @@
       "x_max": 1042,
       "o": "m 0 521 l 0 868 l 174 868 l 174 521 l 0 521 m 174 0 l 174 174 l 521 174 l 521 347 l 174 347 l 174 521 l 521 521 l 521 868 l 174 868 l 174 1042 l 868 1042 l 868 868 l 1042 868 l 1042 174 l 868 174 l 868 0 l 174 0 z "
     },
-    " ": { "ha": 1389, "x_min": 0, "x_max": 0, "o": "" },
+    " ": {
+      "ha": 1389,
+      "x_min": 0,
+      "x_max": 0,
+      "o": ""
+    },
     "!": {
       "ha": 1389,
       "x_min": 347,
@@ -318,6 +323,13 @@
   "descender": -347,
   "underlinePosition": 138,
   "underlineThickness": 69,
-  "boundingBox": { "yMin": -347, "xMin": -174, "yMax": 1389, "xMax": 8681 },
-  "resolution": 1000
+  "boundingBox": {
+    "yMin": -347,
+    "xMin": -174,
+    "yMax": 1389,
+    "xMax": 8681
+  },
+  "resolution": 1000,
+  "familyName": "?",
+  "original_font_information": {}
 }

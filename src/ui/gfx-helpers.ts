@@ -6,7 +6,7 @@ import {
   DoubleSide,
   FrontSide,
   Texture,
-  ShapeBufferGeometry,
+  ShapeGeometry,
   Group,
   DirectionalLight,
   AnimationClip,
@@ -47,7 +47,7 @@ export async function getTexture(imageUrl: string): Promise<Texture> {
 
 export function createFont(message: string, size: number) {
   const shapes = font.generateShapes(message.toLowerCase(), size);
-  const geometry = new ShapeBufferGeometry(shapes);
+  const geometry = new ShapeGeometry(shapes);
   return new Mesh(geometry, fontMaterial);
 }
 
