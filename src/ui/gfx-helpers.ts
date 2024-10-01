@@ -37,6 +37,7 @@ export async function getTexture(imageUrl: string): Promise<Texture> {
     const image = new Image();
     image.crossOrigin = "";
     const texture = new Texture(image);
+    texture.colorSpace = "srgb";
     image.onload = () => {
       texture.needsUpdate = true;
       resolve(texture);
@@ -154,7 +155,7 @@ export function createWalls(dimensions: Vec) {
 }
 
 export function createTopLight(dimensions: Vec) {
-  const light = new DirectionalLight(0xffffff, 0.25);
+  const light = new DirectionalLight(0xffffff, 5 * 0.25);
   light.position.set(0, dimensions.y + 5, 0);
   light.castShadow = true;
   light.shadow.camera.left = -dimensions.x / 2;
@@ -166,7 +167,7 @@ export function createTopLight(dimensions: Vec) {
 }
 
 export function createFrontLight(dimensions: Vec) {
-  const light = new DirectionalLight(0xffffff, 0.35);
+  const light = new DirectionalLight(0xffffff, 5 * 0.35);
   light.position.set(0, -dimensions.y * 0.1, 10);
   return light;
 }

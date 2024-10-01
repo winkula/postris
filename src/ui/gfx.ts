@@ -82,7 +82,7 @@ export class Gfx {
       new Vector3(-2 - pieceHudPos.x, pieceHudPos.y, pieceHudZ)
     );
 
-    this.ambientLight = new AmbientLight(0xffffff, 0.6);
+    this.ambientLight = new AmbientLight(0xffffff, 5 * 0.2);
     this.directionalLightTop = createTopLight(dimensions);
     this.directionalLightFront = createFrontLight(dimensions);
 
